@@ -1,4 +1,4 @@
-package utils.game;
+package model.utils;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -8,7 +8,7 @@ public enum MovementDirection {
     RIGHT(1, 0),
     UP(0, -1),
     DOWN(0, 1),
-    STOP(0, 0);
+    NONE(0, 0);
 
     public final int xDir;
     public final int yDir;
@@ -46,7 +46,7 @@ public enum MovementDirection {
                 return UP;
             }
             default -> {
-                return STOP;
+                return NONE;
             }
         }
     }

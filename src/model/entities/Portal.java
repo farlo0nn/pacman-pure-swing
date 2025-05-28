@@ -1,12 +1,12 @@
-package model.entity;
+package model.entities;
 
 import java.awt.*;
 
 public class Portal extends Entity {
     Portal other;
 
-    public Portal(int x, int y, int width, int height) {
-        super(x,y,width, height);
+    public Portal(int x, int y) {
+        super(x,y);
     }
 
     public void setOther(Portal portal) {
@@ -15,10 +15,5 @@ public class Portal extends Entity {
 
     public Portal getOther() {
         return other;
-    }
-
-    @Override
-    public void render(Graphics g) {
-        g.drawLine(x, y, x, y+height);
     }
 }

@@ -1,4 +1,4 @@
-package utils.game;
+package model.utils;
 
 public enum GhostColor {
     RED,

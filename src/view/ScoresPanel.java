@@ -1,10 +1,7 @@
 package view;
 
 import utils.ImageManager;
-import utils.game.BoardSizes;
-import utils.UIConstants;
 import utils.game.ScoresActions;
-import utils.menu.MainMenuActions;
 import view.components.ImageLabelButton;
 
 import javax.swing.*;

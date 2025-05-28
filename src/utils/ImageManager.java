@@ -1,6 +1,6 @@
 package utils;
 
-import utils.game.GhostColor;
+import model.utils.GhostColor;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -131,5 +131,9 @@ public class ImageManager {
     public static ImageIcon getButtonIcon() {
         ImageIcon buttonIcon = new ImageIcon(Objects.requireNonNull(ImageManager.class.getResource("/ui/button.png")));
         return buttonIcon;
+    }
+
+    public static Image getWallImage(int size) {
+        return new ImageIcon(Objects.requireNonNull(ImageManager.class.getResource("/board/wall.png"))).getImage();
     }
 }

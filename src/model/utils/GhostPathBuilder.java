@@ -1,5 +1,6 @@
-package utils.game;
+package model.utils;
 
+import model.entities.Tile;
 import java.util.*;
 
 public class GhostPathBuilder {

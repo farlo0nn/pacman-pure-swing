@@ -1,4 +1,4 @@
-package utils.game;
+package controller.utils;
 
 public enum BoardSizes {
     SMALL,

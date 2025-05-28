@@ -1,4 +1,4 @@
-package utils;
+package view.utils;
 
 public class UIConstants {
 

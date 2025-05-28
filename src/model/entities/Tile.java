@@ -1,4 +1,4 @@
-package utils.game;
+package model.entities;
 
 public class Tile {
 

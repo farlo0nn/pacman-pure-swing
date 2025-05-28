@@ -1,109 +1,84 @@
 package controller;
 
-import utils.*;
-import utils.game.BoardSizes;
-import utils.game.GameOverActions;
+import dto.GameRenderData;
+import model.GameModel;
+import model.utils.MovementDirection;
+
+import utils.timing.GameTimer;
+import view.GameContainer;
+import view.utils.UIConstants;
+
+import controller.utils.BoardLoader;
+import controller.utils.BoardSizes;
+
 import utils.game.GameStatus;
-import utils.game.ScoresActions;
-import utils.menu.MainMenuActions;
-import view.*;
+
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.function.Consumer;
 
 public class GameController {
+    private final GameContainer gameContainer;
+    private final GameModel gameModel;
+    private int tileSize;
+    private char[][] map;
+    private final Consumer<GameStatus> statusConsumer;
+    private MovementDirection pacmanRequestedDirection;
+    private final GameTimer gameTimer;
+    private final Thread gameThread;
 
-    JFrame frame;
+    public GameController(BoardSizes boardSize, Consumer<GameStatus> statusConsumer) {
+        initSize(boardSize);
+        this.gameModel = new GameModel(map, tileSize);
+        this.gameContainer = new GameContainer(tileSize, this::onDirectionInput);
+        this.statusConsumer = statusConsumer;
 
-    public GameController(){
-        this.frame = new JFrame("pacman");
-        initFrame();
-        showMainMenu();
-        frame.pack();
-        frame.setVisible(true);
+        gameTimer = new GameTimer(4);
+        gameTimer.addCallback(this::updateGame);
+
+        gameThread = new Thread(gameTimer);
+
+        gameThread.start();
     }
 
-    private void initFrame() {
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
-        frame.setLocationRelativeTo(null);
-        frame.setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.WINDOW_HEIGHT));
+    private void onDirectionInput(MovementDirection direction) {
+        pacmanRequestedDirection = direction;
     }
 
-    private void showMainMenu() {
-        setPanel(new MenuPanel(this::onMainMenuAction));
-    }
-
-    private void onMainMenuAction(MainMenuActions action) {
-        switch (action) {
-            case MainMenuActions.START:
-                showBoardSizeSelector();
+    private void initSize(BoardSizes boardSize) {
+        switch (boardSize) {
+            case SMALL -> {
+                tileSize = UIConstants.WINDOW_WIDTH/28;
+                map = BoardLoader.loadBoard("/board/boards/small.csv");
                 break;
-            case MainMenuActions.SCORES:
-                showScores();
+            }
+            case MEDIUM -> {
+                tileSize = UIConstants.WINDOW_WIDTH/42;
+                map = BoardLoader.loadBoard("/board/boards/medium.csv");
                 break;
-            case MainMenuActions.EXIT:
-                frame.dispose();
-                System.exit(0);
+            }
+            case LARGE -> {
+                tileSize = UIConstants.WINDOW_WIDTH/56;
+                map = BoardLoader.loadBoard("/board/boards/large.csv");
                 break;
-        }
-    }
-
-
-    public void showScores() {
-        setPanel(new ScoresPanel(this::onScoresSelector));
-    }
-    private void onScoresSelector(ScoresActions action) {
-        switch (action) {
-            case TO_MENU -> {
-                showMainMenu();
             }
         }
     }
 
+    public void updateGame() {
 
-
-    public void showBoardSizeSelector() {
-        setPanel(new BoardSizeSelectorPanel(this::onBoardSizeSelected));
-    }
-
-    private void onBoardSizeSelected(BoardSizes boardSize) {
-        showGame(boardSize);
-    }
-
-
-    public void showGame(BoardSizes boardSize) {
-        setPanel(new GamePanel(boardSize, this::onGameStatus));
-    }
-
-    private void onGameStatus(GameStatus status) {
-        switch (status){
-            case GameStatus.PAUSE:
-                // TODO
-                break;
-            case GameStatus.GAME_OVER:
-                showGameOver();
+        GameRenderData dto = gameModel.update(pacmanRequestedDirection);
+        if (dto == null) {
+            statusConsumer.accept(GameStatus.OVER);
         }
+        assert dto != null;
+        pacmanRequestedDirection = null;
+        gameContainer.update(dto);
+
+
     }
 
-    public void showGameOver() {
-        setPanel(new GameOverPanel(this::onGameOverActions));
-    }
-
-    private void onGameOverActions(GameOverActions action){
-        switch (action) {
-            case GameOverActions.RESTART:
-                showBoardSizeSelector();
-                break;
-            case GameOverActions.TO_MENU:
-                showMainMenu();
-        }
-    }
-
-
-    private void setPanel(JPanel panel) {
-        frame.setContentPane(panel);
-        frame.revalidate();
-        frame.repaint();
+    public GameContainer getGameContainer() {
+        return this.gameContainer;
     }
 }

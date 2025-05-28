@@ -1,4 +1,4 @@
-package utils.game;
+package controller.utils;
 
 import java.io.*;
 import java.util.ArrayList;
