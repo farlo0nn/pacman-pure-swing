@@ -1,13 +1,10 @@
 package model.entities;
 
-import model.utils.MovementDirection;
-
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
+import utils.MovementDirection;
 
 public abstract class AnimatedEntity extends Entity {
     protected int currentFrame;
-    protected int animationDelay = 10;
+    protected int animationDelay = 1;
     protected int frameCounter = 0;
     protected MovementDirection direction;
     protected int velocityX;
@@ -63,6 +60,13 @@ public abstract class AnimatedEntity extends Entity {
 
     public abstract void update();
     public int getCurrentFrame() {
-        return currentFrame;
+        switch (getDirection()) {
+            case NONE -> {
+                return 0;
+            }
+            default -> {
+                return currentFrame % frameNumber;
+            }
+        }
     }
 }

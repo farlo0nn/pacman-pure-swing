@@ -1,20 +1,21 @@
 package controller;
 
 import dto.GameRenderData;
-import model.GameModel;
-import model.utils.MovementDirection;
 
-import utils.timing.GameTimer;
+import model.GameModel;
+import utils.MovementDirection;
+
+
 import view.GameContainer;
 import view.utils.UIConstants;
 
 import controller.utils.BoardLoader;
 import controller.utils.BoardSizes;
+import controller.utils.timing.GameTimer;
 
 import utils.game.GameStatus;
 
 
-import javax.swing.*;
 import java.util.function.Consumer;
 
 public class GameController {
@@ -29,11 +30,12 @@ public class GameController {
 
     public GameController(BoardSizes boardSize, Consumer<GameStatus> statusConsumer) {
         initSize(boardSize);
+
         this.gameModel = new GameModel(map, tileSize);
         this.gameContainer = new GameContainer(tileSize, this::onDirectionInput);
         this.statusConsumer = statusConsumer;
 
-        gameTimer = new GameTimer(4);
+        gameTimer = new GameTimer(6);
         gameTimer.addCallback(this::updateGame);
 
         gameThread = new Thread(gameTimer);
@@ -69,13 +71,29 @@ public class GameController {
 
         GameRenderData dto = gameModel.update(pacmanRequestedDirection);
         if (dto == null) {
-            statusConsumer.accept(GameStatus.OVER);
+            stopGame();
+            return;
         }
         assert dto != null;
         pacmanRequestedDirection = null;
         gameContainer.update(dto);
 
 
+    }
+
+    public void stopGame() {
+        if (gameTimer != null) {
+            gameTimer.stop();
+        }
+        if (gameThread != null && gameThread.isAlive() && Thread.currentThread() != gameThread) {
+            try {
+                gameThread.join();
+            } catch (InterruptedException e) {
+                // TODO - add logging logic
+                e.printStackTrace();
+            }
+        }
+        this.statusConsumer.accept(GameStatus.OVER);
     }
 
     public GameContainer getGameContainer() {

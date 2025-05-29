@@ -1,8 +1,7 @@
 package model.entities;
 
-import utils.ImageManager;
 import model.utils.GhostColor;
-import model.utils.MovementDirection;
+import utils.MovementDirection;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -21,8 +20,9 @@ public class RandomlyMovingGhost extends AnimatedEntity {
     }
 
     public RandomlyMovingGhost(int x, int y, GhostColor color, ArrayList<Tile> exitPath) {
-        super(x, y, 3);
+        super(x, y, 2);
         reset();
+        this.color = color;
         this.exitPath = exitPath;
     }
 
@@ -67,8 +67,7 @@ public class RandomlyMovingGhost extends AnimatedEntity {
         }
         else {
             Tile next = exitPath.get(exitPathId);
-
-            if (tile.equals(next)) {
+            if (tile.x == next.x || tile.y == next.y) {
                 getNextDirection(next);
                 lastTurnTile = tile;
                 exitPathId++;
@@ -100,5 +99,10 @@ public class RandomlyMovingGhost extends AnimatedEntity {
 
     public GhostColor getColor() {
         return color;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + tile.x + "," + tile.y + ")" + color + " " + exitingBox();
     }
 }

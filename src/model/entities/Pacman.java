@@ -1,6 +1,6 @@
 package model.entities;
 
-import model.utils.MovementDirection;
+import utils.MovementDirection;
 
 public class Pacman extends AnimatedEntity {
 
@@ -8,9 +8,7 @@ public class Pacman extends AnimatedEntity {
 
     public Pacman(int x, int y) {
         super(x, y, 3);
-        System.out.println("INSIDE PACMAN");
         reset();
-        System.out.println(tile);
     }
 
     @Override
@@ -62,6 +60,5 @@ public class Pacman extends AnimatedEntity {
         requestedDirection = MovementDirection.NONE;
         this.tile.x = t.x + direction.xDir;
         this.tile.y = t.y;
-        System.out.println("After teleport " + t.x + " " + t.y );
     }
 }

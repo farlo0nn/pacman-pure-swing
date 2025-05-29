@@ -2,26 +2,46 @@ package view;
 
 import dto.EntityRenderData;
 
-import model.utils.MovementDirection;
+import utils.MovementDirection;
 import utils.EntityType;
+import utils.ImageManager;
 import view.utils.UIConstants;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class GamePanel extends JPanel {
-    private int tileSize;
-    private TileComponent[][] viewBoard;
+    private final int tileSize;
+    private HashMap<Map.Entry<Integer, Integer>, TileComponent> viewBoard;
     private char[][] map;
     private final int rows;
     private final int cols;
     private final Consumer<MovementDirection> directionConsumer;
+    private final ImageManager imageManager;
+    private HashMap<EntityType, HashMap<MovementDirection, Image[]>> animatedFrames;
+    private HashMap<EntityType, Image> staticFrames;
 
     public GamePanel(int tileSize, Consumer<MovementDirection> directionConsumer) {
+        this.imageManager = new ImageManager();
+        this.animatedFrames = new HashMap<>();
+        this.staticFrames = new HashMap<>();
+
+        animatedFrames.put(EntityType.PACMAN, imageManager.getPacmanFrames(tileSize));
+        animatedFrames.put(EntityType.RED_GHOST, imageManager.getGhostFrames(EntityType.RED_GHOST, tileSize));
+        animatedFrames.put(EntityType.YELLOW_GHOST, imageManager.getGhostFrames(EntityType.YELLOW_GHOST, tileSize));
+        animatedFrames.put(EntityType.BLUE_GHOST, imageManager.getGhostFrames(EntityType.BLUE_GHOST, tileSize));
+        animatedFrames.put(EntityType.PINK_GHOST, imageManager.getGhostFrames(EntityType.PINK_GHOST, tileSize));
+        staticFrames.put(EntityType.WALL, imageManager.getWallImage(tileSize));
+        staticFrames.put(EntityType.PELLET, imageManager.getPelletImage(tileSize));
+        staticFrames.put(EntityType.POWER_PELLET, imageManager.getPowerPelletImage(tileSize));
 
         this.directionConsumer = directionConsumer;
         setFocusable(true);
@@ -32,7 +52,7 @@ public class GamePanel extends JPanel {
         cols = getPreferredSize().width/tileSize;
         this.tileSize = tileSize;
         setLayout(new GridLayout(rows, cols));
-        viewBoard = new TileComponent[rows][cols];
+        viewBoard = new HashMap<>();
 
         initEmptyBoard();
 
@@ -52,7 +72,8 @@ public class GamePanel extends JPanel {
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 TileComponent tile = new TileComponent(EntityType.EMPTY, tileSize);
-                viewBoard[row][col] = tile;
+                Map.Entry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(col, row);
+                viewBoard.put(key, tile);
                 this.add(tile);
             }
         }
@@ -80,14 +101,24 @@ public class GamePanel extends JPanel {
     public void renderBoard(ArrayList<EntityRenderData> dtos) {
         removeAll();
 
+        viewBoard = new HashMap<>();
+
         for (EntityRenderData dto : dtos) {
-            this.viewBoard[dto.y()][dto.x()] = new TileComponent(dto.type(), tileSize);
+            TileComponent tile;
+            if (dto.frame() != -1) {
+                tile = new TileComponent(dto.type(), tileSize, animatedFrames.get(dto.type()).get(dto.direction())[dto.frame()]);
+            } else {
+                tile = new TileComponent(dto.type(), tileSize, staticFrames.get(dto.type()));
+            }
+
+            setTile(dto.x(), dto.y(), tile);
         }
 
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-
-                this.add(viewBoard[row][col]);
+                Map.Entry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(col, row);
+                TileComponent tile = viewBoard.getOrDefault(key, new TileComponent(EntityType.EMPTY, tileSize));
+                this.add(tile);
             }
         }
 
@@ -100,8 +131,9 @@ public class GamePanel extends JPanel {
         return r >= 0 && r < rows && c >= 0 && c < cols;
     }
 
-    public void setTile(int y, int x, TileComponent tileComponent) {
-        viewBoard[y][x] = tileComponent;
+    public void setTile(int x, int y, TileComponent tile) {
+        Map.Entry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(x, y);
+        viewBoard.put(key, tile);
     }
 
 }

@@ -7,7 +7,7 @@ import utils.EntityType;
 import utils.game.GameStatus;
 import model.utils.GhostColor;
 import model.utils.GhostPathBuilder;
-import model.utils.MovementDirection;
+import utils.MovementDirection;
 
 import model.entities.*;
 
@@ -87,7 +87,6 @@ public class GameModel {
 
     private void updateGhosts() {
 
-        //randomly moving ghosts update
         for (RandomlyMovingGhost ghost : ghosts) {
             if (!ghost.exitingBox() && !ghost.getTile().equals(ghost.lastTurnTile) && turnPoints.containsKey(ghost.getTile())){
                 ghost.changeDirection(turnPoints.get(ghost.getTile()));
@@ -98,7 +97,6 @@ public class GameModel {
 
         }
 
-        // red ghost update
         if (redGhost.reachedTarget()) {
             ArrayList<Tile> path = GhostPathBuilder.getPath(
                     map,
@@ -157,7 +155,6 @@ public class GameModel {
             initEntities(map);
         }
 
-        System.out.println(pacman);
         updateGhosts();
         pacman.update();
 
@@ -182,6 +179,7 @@ public class GameModel {
     }
 
     public void resetAfterCollision(){
+        initEntities(map);
         pacman.reset();
         ghosts.forEach(Entity::reset);
         redGhost.reset();
@@ -192,26 +190,14 @@ public class GameModel {
     public GameRenderData toRenderDTO() {
         ArrayList<EntityRenderData> entities = new ArrayList<>();
 
-//        for (RandomlyMovingGhost ghost : ghosts) {
-//            EntityType type;
-//            switch (ghost.getColor()) {
-//                case GhostColor.YELLOW -> type = EntityType.YELLOW_GHOST;
-//                case GhostColor.PINK -> type = EntityType.PINK_GHOST;
-//                default -> type = EntityType.BLUE_GHOST;
-//            }
-//            entities.add(new EntityRenderData(
-//                    type,
-//                    ghost.getTile().x,
-//                    ghost.getTile().y,
-//                    ghost.getCurrentFrame()
-//            ));
-//        }
+
 
         for (Block wall : walls) {
             entities.add( new EntityRenderData(
                     EntityType.WALL,
                     wall.getTile().x,
                     wall.getTile().y,
+                    MovementDirection.NONE,
                     -1
             ));
         }
@@ -221,6 +207,7 @@ public class GameModel {
                     EntityType.PELLET,
                     pellet.getTile().x,
                     pellet.getTile().y,
+                    MovementDirection.NONE,
                     -1
             ));
         }
@@ -230,7 +217,24 @@ public class GameModel {
                     EntityType.POWER_PELLET,
                     powerPellet.getTile().x,
                     powerPellet.getTile().y,
+                    MovementDirection.NONE,
                     -1
+            ));
+        }
+
+        for (RandomlyMovingGhost ghost : ghosts) {
+            EntityType type;
+            switch (ghost.getColor()) {
+                case GhostColor.YELLOW -> type = EntityType.YELLOW_GHOST;
+                case GhostColor.PINK -> type = EntityType.PINK_GHOST;
+                default -> type = EntityType.BLUE_GHOST;
+            }
+            entities.add(new EntityRenderData(
+                    type,
+                    ghost.getTile().x,
+                    ghost.getTile().y,
+                    ghost.getDirection(),
+                    ghost.getCurrentFrame()
             ));
         }
 
@@ -238,6 +242,7 @@ public class GameModel {
                 EntityType.PACMAN,
                 pacman.getTile().x,
                 pacman.getTile().y,
+                pacman.getDirection(),
                 pacman.getCurrentFrame()
         ));
 
@@ -245,6 +250,7 @@ public class GameModel {
                 EntityType.RED_GHOST,
                 redGhost.getTile().x,
                 redGhost.getTile().y,
+                redGhost.getDirection(),
                 redGhost.getCurrentFrame()
         ));
 
@@ -275,9 +281,7 @@ public class GameModel {
                 if (value == 'X') {
                     walls.add(new Block(x, y));
                 } else if (value == 'P') {
-                    System.out.println("PACMAN INIT");
                     pacman = new Pacman(x, y);
-                    System.out.println(pacman);
                 } else if (value == '.') {
                     pellets.add(new Block(x, y));
                     pelletsLeft++;
@@ -297,17 +301,24 @@ public class GameModel {
                 }
             }
         }
+
+        if (portals.size() % 2 != 0){
+            //TODO LOG
+
+        }
+        else {
+            for (int i = 0; i < portals.size() - 1; i+=2) {
+                portals.get(i).setOther(portals.get(i+1));
+                portals.get(i+1).setOther(portals.get(i));
+            }
+        }
     }
 
     public void addGhost(int colId, int rowId, GhostColor color ){
-        Tile tile = new Tile(rowId, colId);
+        Tile tile = new Tile(colId, rowId);
         ArrayList<Tile> exitPath = GhostPathBuilder.getPath(map, tile, GhostPathBuilder.getClosestTurnPoint(new ArrayList<Tile>(turnPoints.keySet()), tile));
-
-        for (Tile tile1 : exitPath) {
-            System.out.println(tile1);
-        }
-
-        ghosts.add(new RandomlyMovingGhost(colId, rowId, color, exitPath));
+        RandomlyMovingGhost ghost = new RandomlyMovingGhost(colId, rowId, color, exitPath);
+        ghosts.add(ghost);
     }
 }
 

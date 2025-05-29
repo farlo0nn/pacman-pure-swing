@@ -1,6 +1,8 @@
 package model.utils;
 
 import model.entities.Tile;
+import utils.MovementDirection;
+
 import java.util.*;
 
 public class GhostPathBuilder {

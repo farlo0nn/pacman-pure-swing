@@ -1,13 +1,13 @@
 package model.entities;
 
-import model.utils.MovementDirection;
+import utils.MovementDirection;
 
 public class RedGhost extends AnimatedEntity {
 
     private Tile target;
 
     public RedGhost(int x, int y) {
-        super(x, y, 3);
+        super(x, y, 2);
         reset();
     }
 

@@ -1,4 +1,4 @@
-package utils.timing;
+package controller.utils.timing;
 
 import java.util.ArrayList;
 
