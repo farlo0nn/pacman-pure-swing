@@ -1,50 +1,57 @@
 package view;
 
 import utils.ImageManager;
-import utils.game.BoardSizes;
-import utils.UIConstants;
 import utils.game.ScoresActions;
-import utils.menu.MainMenuActions;
 import view.components.ImageLabelButton;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
-
-
 public class ScoresPanel extends JPanel {
-    public static final int TILE_SIZE = 24;
-    public static final int WIDTH = 30;
-    public static final int HEIGHT = 30;
 
-    public ScoresPanel(Consumer<ScoresActions> scoresActionsConsumer) {
+    public ScoresPanel(ArrayList<String> scores, Consumer<ScoresActions> scoresActionsConsumer) {
 
         setBackground(Color.BLACK);
-        setLayout(new GridBagLayout());
+        setLayout(new GridLayout(2,1));
 
         setFocusable(true);
 
+        JTextArea textArea = new JTextArea(400, 40);
+        textArea.setBackground(Color.BLACK);
+        textArea.setForeground(Color.WHITE);
+        textArea.setEditable(false);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 20));
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
-        buttonPanel.setOpaque(false);
+        for (String score : scores) {
+            textArea.append(score + "\n");
+        }
+
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setBackground(Color.BLACK);
+        scrollPane.getViewport().setBackground(Color.BLACK);
+
+        this.add(scrollPane);
+
+        JPanel buttonPanel = new JPanel(new GridBagLayout());
+
+        buttonPanel.setBackground(Color.BLACK);
 
         Dimension buttonSize = new Dimension(192*2, 64*2);
         ImageIcon buttonIcon = ImageManager.getButtonIcon();
 
-        ImageLabelButton return_ = new ImageLabelButton("return", buttonIcon, buttonSize);
+        ImageLabelButton returnButton = new ImageLabelButton("return", buttonIcon, buttonSize);
 
-        return_.addActionListener(e -> scoresActionsConsumer.accept(ScoresActions.TO_MENU));
+        returnButton.addActionListener(e -> scoresActionsConsumer.accept(ScoresActions.TO_MENU));
 
-        return_.setMaximumSize(buttonSize);
-        return_.setPreferredSize(buttonSize);
-        return_.setMinimumSize(buttonSize);
-        return_.setAlignmentX(Component.CENTER_ALIGNMENT);
-        buttonPanel.add(return_);
-        buttonPanel.add(Box.createVerticalStrut(30));
+        returnButton.setPreferredSize(buttonSize);
 
-        add(buttonPanel);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        buttonPanel.add(returnButton, gbc);
+
+        this.add(buttonPanel);
 
     }
 

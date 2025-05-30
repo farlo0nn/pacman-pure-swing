@@ -1,6 +1,6 @@
 package utils.game;
 
-public enum BoardSizes {
+public enum BoardSize {
     SMALL,
     MEDIUM,
     LARGE

@@ -1,109 +1,137 @@
 package controller;
 
-import utils.*;
-import utils.game.BoardSizes;
-import utils.game.GameOverActions;
+import controller.interfaces.GameModelListener;
+import controller.interfaces.GameViewListener;
+import dto.GameExitData;
+import dto.GameRenderData;
+
+import model.api.GameModel;
+import utils.EntityType;
+import utils.MovementDirection;
+
+import view.api.GameView;
+
+import controller.utils.timing.GameTimer;
+
 import utils.game.GameStatus;
-import utils.game.ScoresActions;
-import utils.menu.MainMenuActions;
-import view.*;
+
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.function.Consumer;
 
-public class GameController {
+public class GameController implements GameViewListener, GameModelListener {
+    private final GameView gameView;
+    private final GameModel gameModel;
+    private int tileSize;
+    private char[][] map;
+    private final Consumer<GameExitData> statusConsumer;
+    private MovementDirection pacmanRequestedDirection;
+    private final ArrayList<GameTimer> timers;
+    Thread boostThread;
 
-    JFrame frame;
+    public GameController(GameView gameView, GameModel gameModel, Consumer<GameExitData> statusConsumer) {
+        this.gameView = gameView;
+        this.gameModel = gameModel;
+        this.statusConsumer = statusConsumer;
+        this.timers = new ArrayList<>();
 
-    public GameController(){
-        this.frame = new JFrame("pacman");
-        initFrame();
-        showMainMenu();
-        frame.pack();
-        frame.setVisible(true);
-    }
+        this.gameModel.setBoostsListener(this::onBoostSpawned);
+        this.gameView.setInputListener(this::onInput);
 
-    private void initFrame() {
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
-        frame.setLocationRelativeTo(null);
-        frame.setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.WINDOW_HEIGHT));
-    }
+        timers.add(new GameTimer(50, this::updateGame));
+        timers.add(new GameTimer(200, this::updateGhosts));
+        timers.add(new GameTimer(75, this::updatePacman));
+        timers.add(new GameTimer(1000, this::updateHud));
+        timers.add(new GameTimer(5000, this::spawnBoost));
 
-    private void showMainMenu() {
-        setPanel(new MenuPanel(this::onMainMenuAction));
-    }
-
-    private void onMainMenuAction(MainMenuActions action) {
-        switch (action) {
-            case MainMenuActions.START:
-                showBoardSizeSelector();
-                break;
-            case MainMenuActions.SCORES:
-                showScores();
-                break;
-            case MainMenuActions.EXIT:
-                frame.dispose();
-                System.exit(0);
-                break;
+        for (GameTimer timer : timers) {
+            timer.start();
         }
     }
 
-
-    public void showScores() {
-        setPanel(new ScoresPanel(this::onScoresSelector));
+    @Override
+    public void onInput(Integer keyCode) {
+        switch (keyCode) {
+            case 27 -> stopGame();
+            case 37 -> pacmanRequestedDirection = MovementDirection.LEFT;
+            case 38 -> pacmanRequestedDirection = MovementDirection.UP;
+            case 39 -> pacmanRequestedDirection = MovementDirection.RIGHT;
+            case 40 -> pacmanRequestedDirection = MovementDirection.DOWN;
+        }
     }
-    private void onScoresSelector(ScoresActions action) {
-        switch (action) {
-            case TO_MENU -> {
-                showMainMenu();
+
+    @Override
+    public void onBoostSpawned(EntityType boostType) {
+        if (Objects.requireNonNull(boostType) == EntityType.SPEED_BOOST) {
+            boostThread = new Thread(() -> {
+                synchronized (gameModel) {
+                    gameModel.setSpeedBoosted(true);
+                }
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                synchronized (gameModel) {
+                    gameModel.setSpeedBoosted(false);
+                }
+            });
+            boostThread.start();
+        }
+    }
+
+    private void updateGame() {
+        synchronized (gameModel) {
+            GameRenderData dto = gameModel.update();
+            if (dto == null) {
+                stopGame();
+                return;
+            }
+            synchronized (gameView) {
+                SwingUtilities.invokeLater(() -> {
+                    gameView.render(dto);});
             }
         }
+
     }
 
-
-
-    public void showBoardSizeSelector() {
-        setPanel(new BoardSizeSelectorPanel(this::onBoardSizeSelected));
-    }
-
-    private void onBoardSizeSelected(BoardSizes boardSize) {
-        showGame(boardSize);
-    }
-
-
-    public void showGame(BoardSizes boardSize) {
-        setPanel(new GamePanel(boardSize, this::onGameStatus));
-    }
-
-    private void onGameStatus(GameStatus status) {
-        switch (status){
-            case GameStatus.PAUSE:
-                // TODO
-                break;
-            case GameStatus.GAME_OVER:
-                showGameOver();
+    private void updatePacman() {
+        synchronized (gameModel) {
+            this.gameModel.updatePacman(pacmanRequestedDirection);
+            pacmanRequestedDirection = null;
         }
     }
 
-    public void showGameOver() {
-        setPanel(new GameOverPanel(this::onGameOverActions));
+    private void spawnBoost() {
+        synchronized (gameModel) {
+            gameModel.spawnBoost();
+        }
     }
 
-    private void onGameOverActions(GameOverActions action){
-        switch (action) {
-            case GameOverActions.RESTART:
-                showBoardSizeSelector();
-                break;
-            case GameOverActions.TO_MENU:
-                showMainMenu();
+    private void updateGhosts() {
+        synchronized (gameModel) {
+            gameModel.updateGhosts();
+        }
+    }
+
+    private void updateHud() {
+        synchronized (gameView) {
+            SwingUtilities.invokeLater(gameView::updateHUD);
         }
     }
 
 
-    private void setPanel(JPanel panel) {
-        frame.setContentPane(panel);
-        frame.revalidate();
-        frame.repaint();
+    public void stopGame() {
+
+        for (GameTimer timer : timers) {
+            if (timer != null) {
+                timer.stop();
+            }
+        }
+
+        GameExitData exitDTO = gameModel.getGameInfo();
+        this.statusConsumer.accept(exitDTO);
     }
 }

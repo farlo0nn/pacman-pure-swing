@@ -1,4 +1,4 @@
-package utils.game;
+package view.utils;
 
 import java.awt.*;
 
