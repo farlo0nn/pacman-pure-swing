@@ -137,6 +137,23 @@ public class ImageManager {
         }
     }
 
+    public Image getScoreBoostImage(int size) {
+        BufferedImage boostImage = spriteSheet.getSubimage(0, 8 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
+        boostImage = this.resize(boostImage, size);
+        return boostImage;
+    }
+
+    public Image getSpeedBoostImage(int size) {
+        BufferedImage boostImage = spriteSheet.getSubimage(spriteSheetTextureSize, 8 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
+        boostImage = this.resize(boostImage, size);
+        return boostImage;
+    }
+
+    public Image getLivesBoostImage(int size) {
+        BufferedImage boostImage = spriteSheet.getSubimage(2 * spriteSheetTextureSize, 8 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
+        boostImage = this.resize(boostImage, size);
+        return boostImage;
+    }
 
     public HashMap<MovementDirection, Image[]> getPacmanFrames(int size) {
         BufferedImage[] images = getPacmanImages(size);

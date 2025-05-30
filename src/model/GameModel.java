@@ -3,6 +3,7 @@ package model;
 import dto.EntityRenderData;
 import dto.GameRenderData;
 
+import model.utils.BoostType;
 import utils.EntityType;
 import utils.game.GameStatus;
 import model.utils.GhostColor;
@@ -11,9 +12,8 @@ import utils.MovementDirection;
 
 import model.entities.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
+import java.util.function.Consumer;
 
 public class GameModel {
 
@@ -25,32 +25,45 @@ public class GameModel {
     private HashSet<Block> pellets;
     private HashSet<Block> powerPellets;
     private ArrayList<Portal> portals;
+    private ArrayList<Boost> boosts;
     private Pacman pacman;
     private int score;
     private int lives;
     private int pelletsLeft;
     private GameStatus status;
     private final HashMap<Tile, ArrayList<MovementDirection>> turnPoints;
+    private boolean speedBoosted;
+    private Consumer<EntityType> boostsListener;
+    private boolean pacmanLastUpdated;
 
-    public GameModel(char[][] map, int tileSize) {
+    public GameModel(char[][] map, int tileSize, Consumer<EntityType> boostsListener) {
         this.map = map;
         this.turnPoints = GhostPathBuilder.getTurnPoints(map);
         initEntities(map);
         this.lives = 3;
         this.score = 0;
         this.status = GameStatus.RUNNING;
+        this.boostsListener = boostsListener;
     }
 
-    public void wallCollisions() {
+    public void spawnBoost() {
+        if (Math.random()<=0.75) {
+            System.out.println("BOOST ADDED");
+            Tile boostSpawn = ghosts.get(new Random().nextInt(ghosts.size())).getTile();
+            boosts.add(new Boost(boostSpawn.x, boostSpawn.y, BoostType.SPEED));
+        }
+    }
+
+    private void wallCollisions() {
         boolean collisionInRequestedDirection = false;
 
         for (Block wall : walls) {
 
-            if (redGhost.getTile().equals(wall.getTile())) {
+            if (redGhost.collides(wall)) {
                 redGhost.stepBack();
             }
 
-            if (pacman.getTile().equals(wall.getTile())) {
+            if (pacman.collides(wall)) {
                 pacman.stepBack();
                 pacman.stop();
             }
@@ -71,13 +84,28 @@ public class GameModel {
         }
     }
 
+    private void boostsCollisions() {
+        Iterator<Boost> iterator = boosts.iterator();
+        while (iterator.hasNext()) {
+            Boost boost = iterator.next();
+            if (pacman.collides(boost)) {
+                switch (boost.getType()){
+                    case SPEED -> boostsListener.accept(EntityType.SPEED_BOOST);
+                    case SCORE -> score+=200;
+                    case LIVES -> lives+=1;
+                }
+                iterator.remove();
+            }
+        }
+    }
+
     private void portalCollisions() {
         for (Portal portal : portals) {
-            if (pacman.getTile().equals(portal.getTile())) {
+            if (pacman.collides(portal)) {
                 pacman.teleport(portal.getOther().getTile());
             }
             for (RandomlyMovingGhost ghost : ghosts) {
-                if (ghost.getTile().equals(portal.getTile())) {
+                if (ghost.collides(portal)) {
                     ghost.changeDirection(MovementDirection.opposite(ghost.getDirection()));
                     ghost.lastTurnTile = new Tile(ghost.getTile().x, ghost.getTile().y);
                 }
@@ -85,8 +113,7 @@ public class GameModel {
         }
     }
 
-    private void updateGhosts() {
-
+    public GameRenderData updateGhosts() {
         for (RandomlyMovingGhost ghost : ghosts) {
             if (!ghost.exitingBox() && !ghost.getTile().equals(ghost.lastTurnTile) && turnPoints.containsKey(ghost.getTile())){
                 ghost.changeDirection(turnPoints.get(ghost.getTile()));
@@ -111,9 +138,27 @@ public class GameModel {
         }
 
         redGhost.update();
+        return toRenderDTO();
     }
 
-    private void updatePellets() {
+    public GameRenderData updatePacman(MovementDirection pacmanRequestedDirection) {
+        if (pacmanRequestedDirection != null) {
+            pacman.setRequestedDirection(pacmanRequestedDirection);
+        }
+
+        if (!pacmanLastUpdated || speedBoosted) {
+            System.out.println(speedBoosted);
+            pacman.update();
+            pacmanLastUpdated = true;
+        }
+        else {
+            pacmanLastUpdated = false;
+        }
+
+        return toRenderDTO();
+    }
+
+    private void pelletCollisions() {
 
         ArrayList<Block> pelletsToRemove = new ArrayList<>();
         for (Block pellet : pellets) {
@@ -138,13 +183,9 @@ public class GameModel {
         pelletsLeft-=powerPelletsToRemove.size();
     }
 
-    public GameRenderData update(MovementDirection pacmanRequestedDirection) {
+    public GameRenderData update() {
 
         if (status != GameStatus.RUNNING) return null;
-
-        if (pacmanRequestedDirection != null) {
-            pacman.setRequestedDirection(pacmanRequestedDirection);
-        }
 
         if (lives == 0) {
             status = GameStatus.OVER;
@@ -155,13 +196,10 @@ public class GameModel {
             initEntities(map);
         }
 
-        updateGhosts();
-        pacman.update();
-
         wallCollisions();
+        boostsCollisions();
         portalCollisions();
-
-        updatePellets();
+        pelletCollisions();
 
         for (RandomlyMovingGhost ghost : ghosts) {
             if (pacman.getTile().equals(ghost.getTile())) {
@@ -179,7 +217,9 @@ public class GameModel {
     }
 
     public void resetAfterCollision(){
-        initEntities(map);
+
+        System.out.println(pacman.getTile());
+
         pacman.reset();
         ghosts.forEach(Entity::reset);
         redGhost.reset();
@@ -189,8 +229,6 @@ public class GameModel {
 
     public GameRenderData toRenderDTO() {
         ArrayList<EntityRenderData> entities = new ArrayList<>();
-
-
 
         for (Block wall : walls) {
             entities.add( new EntityRenderData(
@@ -254,6 +292,24 @@ public class GameModel {
                 redGhost.getCurrentFrame()
         ));
 
+        for (Boost boost : boosts) {
+
+            EntityType type;
+            switch (boost.getType()){
+                case LIVES -> type = EntityType.LIVES_BOOST;
+                case SCORE -> type = EntityType.SCORE_BOOST;
+                default -> type = EntityType.SPEED_BOOST;
+            }
+
+            entities.add( new EntityRenderData(
+                type,
+                boost.getTile().x,
+                boost.getTile().y,
+                MovementDirection.NONE,
+                -1
+            ));
+        }
+
 
         return new GameRenderData(map, entities, score, lives);
     }
@@ -267,6 +323,7 @@ public class GameModel {
         pellets = new HashSet<>();
         powerPellets = new HashSet<>();
         portals = new ArrayList<>();
+        boosts = new ArrayList<>();
         walls = new HashSet<>();
 
 
@@ -319,6 +376,10 @@ public class GameModel {
         ArrayList<Tile> exitPath = GhostPathBuilder.getPath(map, tile, GhostPathBuilder.getClosestTurnPoint(new ArrayList<Tile>(turnPoints.keySet()), tile));
         RandomlyMovingGhost ghost = new RandomlyMovingGhost(colId, rowId, color, exitPath);
         ghosts.add(ghost);
+    }
+
+    public void setSpeedBoosted(boolean boosted){
+        this.speedBoosted = boosted;
     }
 }
 

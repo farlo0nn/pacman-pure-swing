@@ -12,24 +12,27 @@ public abstract class Entity implements Collidable {
         this.spawnTile = new Tile(x, y);
     }
 
-    public void setPosition(Tile tile) {
-        this.tile = tile;
-    }
-
+    @Override
     public Tile getTile() {
         return tile;
     }
 
-    public Tile getSpawnTile() {
-        return spawnTile;
+    @Override
+    public boolean collides(Collidable other) {
+        if(this.getTile().equals(other.getTile())){
+            return true;
+        }
+        return false;
     }
 
     public void reset() {
-        setPosition(spawnTile);
+        this.tile = new Tile(spawnTile.x, spawnTile.y);
     }
 
     @Override
     public String toString() {
         return "(" + tile.x + "," + tile.y + ")";
     }
+
+
 }

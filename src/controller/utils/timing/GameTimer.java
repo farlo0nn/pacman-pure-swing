@@ -1,38 +1,25 @@
 package controller.utils.timing;
 
-import java.util.ArrayList;
 
-public class GameTimer implements Runnable {
-    private volatile boolean running = true;
+public class GameTimer {
 
-    private final int fps;
-    private int currentTick;
-    private ArrayList<RecurrentCallback> callbacks;
+    private Thread thread;
+    private long intervalMillis;
+    private long currentTick;
+    private Runnable task;
+    private volatile boolean running = false;
 
-    public GameTimer(int fps) {
-        this.fps = fps;
-        callbacks = new ArrayList<>();
-        currentTick = 1;
+    public GameTimer(long intervalMillis, Runnable task) {
+        this.intervalMillis = intervalMillis;
+        this.task = task;
     }
 
-    @Override
-    public void run() {
-        long frameDuration = 1000 / fps;
-        while (running) {
-            tick(frameDuration);
-        }
-    }
-
-    private void tick(long frameDuration) {
+    private void tick(long intervalMillis) {
         long startExec = System.currentTimeMillis();
-        for (RecurrentCallback callback : callbacks) {
-            if (currentTick%callback.frequency == 0){
-                callback.run();
-            }
-        }
+        task.run();
         long endExec = System.currentTimeMillis();
         long elapsed = endExec - startExec;
-        long sleepTime = frameDuration - elapsed;
+        long sleepTime = intervalMillis - elapsed;
 
         if (sleepTime > 0) {
             try {
@@ -44,19 +31,19 @@ public class GameTimer implements Runnable {
         currentTick++;
     }
 
+    public void start() {
+        if (running) return;
+        running = true;
+        thread = new Thread(() -> {
+            while (running) {
+                tick(intervalMillis);
+            }
+        });
+        thread.start();
+    }
+
     public void stop() {
         running = false;
-    }
-
-    public boolean isRunning() {
-        return running;
-    }
-
-    public void addCallback(Runnable callback, int frequency) {
-        callbacks.add(new RecurrentCallback(callback, frequency));
-    }
-    public void addCallback(Runnable callback) {
-        addCallback(callback, 1);
+        thread.interrupt();
     }
 }
-

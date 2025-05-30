@@ -24,12 +24,12 @@ public class GamePanel extends JPanel {
     private char[][] map;
     private final int rows;
     private final int cols;
-    private final Consumer<MovementDirection> directionConsumer;
+    private final Consumer<Integer> keyConsumer;
     private final ImageManager imageManager;
     private HashMap<EntityType, HashMap<MovementDirection, Image[]>> animatedFrames;
     private HashMap<EntityType, Image> staticFrames;
 
-    public GamePanel(int tileSize, Consumer<MovementDirection> directionConsumer) {
+    public GamePanel(int tileSize, Consumer<Integer> keyConsumer) {
         this.imageManager = new ImageManager();
         this.animatedFrames = new HashMap<>();
         this.staticFrames = new HashMap<>();
@@ -42,8 +42,11 @@ public class GamePanel extends JPanel {
         staticFrames.put(EntityType.WALL, imageManager.getWallImage(tileSize));
         staticFrames.put(EntityType.PELLET, imageManager.getPelletImage(tileSize));
         staticFrames.put(EntityType.POWER_PELLET, imageManager.getPowerPelletImage(tileSize));
+        staticFrames.put(EntityType.SCORE_BOOST, imageManager.getScoreBoostImage(tileSize));
+        staticFrames.put(EntityType.SPEED_BOOST, imageManager.getSpeedBoostImage(tileSize));
+        staticFrames.put(EntityType.LIVES_BOOST, imageManager.getLivesBoostImage(tileSize));
 
-        this.directionConsumer = directionConsumer;
+        this.keyConsumer = keyConsumer;
         setFocusable(true);
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.GAME_PANEL_HEIGHT));
@@ -83,16 +86,11 @@ public class GamePanel extends JPanel {
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                MovementDirection requestedDirection = MovementDirection.NONE;
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_UP -> requestedDirection = MovementDirection.UP;
-                    case KeyEvent.VK_DOWN -> requestedDirection = MovementDirection.DOWN;
-                    case KeyEvent.VK_LEFT -> requestedDirection = MovementDirection.LEFT;
-                    case KeyEvent.VK_RIGHT -> requestedDirection = MovementDirection.RIGHT;
-                }
+                Integer key = null;
+                key = e.getKeyCode();
 
-                if(requestedDirection != MovementDirection.NONE) {
-                    directionConsumer.accept(requestedDirection);
+                if(key != null) {
+                    keyConsumer.accept(key);
                 }
             }
         });

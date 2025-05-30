@@ -10,6 +10,7 @@ import view.utils.UIConstants;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 public class AppController {
 
@@ -76,9 +77,8 @@ public class AppController {
     }
 
     private void onGameStatus(GameStatus status) {
-        switch (status){
-            case GameStatus.OVER:
-                showGameOver();
+        if (Objects.requireNonNull(status) == GameStatus.OVER) {
+            showGameOver();
         }
     }
 

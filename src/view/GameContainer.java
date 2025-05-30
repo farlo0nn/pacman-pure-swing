@@ -14,12 +14,12 @@ public class GameContainer extends JPanel {
     private GamePanel gamePanel;
     private HudPanel hudPanel;
 
-    public GameContainer(int tileSize, Consumer<MovementDirection> directionConsumer) {
+    public GameContainer(int tileSize, Consumer<Integer> keyConsumer) {
         setLayout(new GridBagLayout());
         setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.WINDOW_HEIGHT));
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gamePanel = new GamePanel(tileSize, directionConsumer);
+        gamePanel = new GamePanel(tileSize, keyConsumer);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -40,5 +40,9 @@ public class GameContainer extends JPanel {
     public void update(GameRenderData dto) {
         hudPanel.update(dto.score(), dto.lives());
         gamePanel.renderBoard(dto.entities());
+    }
+
+    public void updateHud() {
+        hudPanel.update();
     }
 }

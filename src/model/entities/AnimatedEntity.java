@@ -2,6 +2,8 @@ package model.entities;
 
 import utils.MovementDirection;
 
+import java.util.Objects;
+
 public abstract class AnimatedEntity extends Entity {
     protected int currentFrame;
     protected int animationDelay = 1;
@@ -39,10 +41,6 @@ public abstract class AnimatedEntity extends Entity {
         return direction;
     }
 
-    public Tile getTile() {
-        return this.tile;
-    }
-
     public void stepBack() {
         move(false);
     }
@@ -60,13 +58,9 @@ public abstract class AnimatedEntity extends Entity {
 
     public abstract void update();
     public int getCurrentFrame() {
-        switch (getDirection()) {
-            case NONE -> {
-                return 0;
-            }
-            default -> {
-                return currentFrame % frameNumber;
-            }
+        if (Objects.requireNonNull(getDirection()) == MovementDirection.NONE) {
+            return 0;
         }
+        return currentFrame % frameNumber;
     }
 }

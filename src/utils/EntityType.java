@@ -10,5 +10,8 @@ public enum EntityType {
     YELLOW_GHOST,
     BLUE_GHOST,
     PINK_GHOST,
-    PORTAL
+    PORTAL,
+    SCORE_BOOST,
+    LIVES_BOOST,
+    SPEED_BOOST
 }

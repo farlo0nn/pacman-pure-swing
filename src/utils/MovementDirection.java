@@ -22,7 +22,7 @@ public enum MovementDirection {
         return new int[]{xDir, yDir};
     }
 
-    public static MovementDirection randomDirection()  {
+    public static MovementDirection random()  {
         MovementDirection[] values = MovementDirection.values();
         return values[new Random().nextInt(values.length-1)];
     }
