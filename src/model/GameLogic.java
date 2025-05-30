@@ -408,7 +408,7 @@ public class GameLogic implements GameModel {
     @Override
     public GameExitData getGameInfo(){
         return new GameExitData(
-                status,
+                GameStatus.OVER,
                 score,
                 boardSize
         );
