@@ -1,7 +1,7 @@
 package view;
 
 import utils.ImageManager;
-import controller.utils.BoardSizes;
+import utils.game.BoardSize;
 import view.components.ImageLabelButton;
 
 import javax.swing.*;
@@ -15,7 +15,7 @@ public class BoardSizeSelectorPanel extends JPanel {
     public static final int WIDTH = 30;
     public static final int HEIGHT = 30;
 
-    public BoardSizeSelectorPanel(Consumer<BoardSizes> boardSizeCallback) {
+    public BoardSizeSelectorPanel(Consumer<BoardSize> boardSizeCallback) {
 
         setBackground(Color.BLACK);
         setLayout(new GridBagLayout());
@@ -34,9 +34,9 @@ public class BoardSizeSelectorPanel extends JPanel {
         ImageLabelButton medium = new ImageLabelButton("medium", buttonIcon, buttonSize);
         ImageLabelButton large = new ImageLabelButton("large", buttonIcon, buttonSize);
 
-        small.addActionListener(e -> boardSizeCallback.accept(BoardSizes.SMALL));
-        medium.addActionListener(e -> boardSizeCallback.accept(BoardSizes.MEDIUM));
-        large.addActionListener(e -> boardSizeCallback.accept(BoardSizes.LARGE));
+        small.addActionListener(e -> boardSizeCallback.accept(BoardSize.SMALL));
+        medium.addActionListener(e -> boardSizeCallback.accept(BoardSize.MEDIUM));
+        large.addActionListener(e -> boardSizeCallback.accept(BoardSize.LARGE));
 
         for (JButton button : new JButton[]{small, medium, large}) {
             button.setMaximumSize(buttonSize);

@@ -24,13 +24,12 @@ public class GamePanel extends JPanel {
     private char[][] map;
     private final int rows;
     private final int cols;
-    private final Consumer<Integer> keyConsumer;
-    private final ImageManager imageManager;
-    private HashMap<EntityType, HashMap<MovementDirection, Image[]>> animatedFrames;
-    private HashMap<EntityType, Image> staticFrames;
+    private Consumer<Integer> inputConsumer;
+    private final HashMap<EntityType, HashMap<MovementDirection, Image[]>> animatedFrames;
+    private final HashMap<EntityType, Image> staticFrames;
 
-    public GamePanel(int tileSize, Consumer<Integer> keyConsumer) {
-        this.imageManager = new ImageManager();
+    public GamePanel(int tileSize) {
+        ImageManager imageManager = new ImageManager();
         this.animatedFrames = new HashMap<>();
         this.staticFrames = new HashMap<>();
 
@@ -46,7 +45,6 @@ public class GamePanel extends JPanel {
         staticFrames.put(EntityType.SPEED_BOOST, imageManager.getSpeedBoostImage(tileSize));
         staticFrames.put(EntityType.LIVES_BOOST, imageManager.getLivesBoostImage(tileSize));
 
-        this.keyConsumer = keyConsumer;
         setFocusable(true);
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.GAME_PANEL_HEIGHT));
@@ -63,6 +61,11 @@ public class GamePanel extends JPanel {
         requestFocusInWindow();
         setupInputHandling();
     }
+
+    public void setInputConsumer(Consumer<Integer> inputConsumer){
+        this.inputConsumer = inputConsumer;
+    }
+
 
     @Override
     public void addNotify() {
@@ -90,7 +93,7 @@ public class GamePanel extends JPanel {
                 key = e.getKeyCode();
 
                 if(key != null) {
-                    keyConsumer.accept(key);
+                    inputConsumer.accept(key);
                 }
             }
         });

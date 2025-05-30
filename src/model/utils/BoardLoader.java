@@ -1,4 +1,4 @@
-package controller.utils;
+package model.utils;
 
 import java.io.*;
 import java.util.ArrayList;

@@ -1,38 +1,35 @@
 package controller;
 
-import controller.utils.BoardSizes;
+import dto.GameExitData;
+import model.GameLogic;
+import model.api.GameModel;
+
+import view.*;
+import view.UIManager;
+
+import utils.io.FileManager;
+import utils.menu.MainMenuActions;
+
+import utils.game.BoardSize;
 import utils.game.GameOverActions;
 import utils.game.GameStatus;
 import utils.game.ScoresActions;
-import utils.menu.MainMenuActions;
-import view.*;
-import view.utils.UIConstants;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.Objects;
 
 public class AppController {
 
-    JFrame frame;
+    private final UIManager uiManager;
+    private final FileManager fileManager;
 
-    public AppController(){
-        this.frame = new JFrame("pacman");
-        initFrame();
+    public AppController() {
+        this.uiManager = new UIManager();
+        this.fileManager = new FileManager();
         showMainMenu();
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    private void initFrame() {
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
-        frame.setLocationRelativeTo(null);
-        frame.setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.WINDOW_HEIGHT));
     }
 
     private void showMainMenu() {
-        setPanel(new MenuPanel(this::onMainMenuAction));
+        uiManager.setPanel(new MenuPanel(this::onMainMenuAction));
     }
 
     private void onMainMenuAction(MainMenuActions action) {
@@ -44,7 +41,6 @@ public class AppController {
                 showScores();
                 break;
             case MainMenuActions.EXIT:
-                frame.dispose();
                 System.exit(0);
                 break;
         }
@@ -52,7 +48,7 @@ public class AppController {
 
 
     public void showScores() {
-        setPanel(new ScoresPanel(this::onScoresSelector));
+        uiManager.setPanel(new ScoresPanel(this::onScoresSelector));
     }
     private void onScoresSelector(ScoresActions action) {
         switch (action) {
@@ -63,27 +59,30 @@ public class AppController {
     }
 
     public void showBoardSizeSelector() {
-        setPanel(new BoardSizeSelectorPanel(this::onBoardSizeSelected));
+        uiManager.setPanel(new BoardSizeSelectorPanel(this::onBoardSizeSelected));
     }
 
-    private void onBoardSizeSelected(BoardSizes boardSize) {
+    private void onBoardSizeSelected(BoardSize boardSize) {
         showGame(boardSize);
     }
 
-
-    public void showGame(BoardSizes boardSize) {
-
-        setPanel(new GameController(boardSize, this::onGameStatus).getGameContainer());
+    public void showGame(BoardSize boardSize) {
+        GameModel model = new GameLogic(boardSize);
+        GameContainer view = new GameContainer(boardSize);
+        GameController controller = new GameController(view, model, this::onGameStatus);
+        uiManager.setPanel(view);
     }
 
-    private void onGameStatus(GameStatus status) {
-        if (Objects.requireNonNull(status) == GameStatus.OVER) {
+    private void onGameStatus(GameExitData data) {
+        if (Objects.requireNonNull(data.status()) == GameStatus.OVER) {
+            String username = uiManager.showDialogue();
+            fileManager.saveScores(username, data.size(), data.score());
             showGameOver();
         }
     }
 
     public void showGameOver() {
-        setPanel(new GameOverPanel(this::onGameOverActions));
+        uiManager.setPanel(new GameOverPanel(this::onGameOverActions));
     }
 
     private void onGameOverActions(GameOverActions action){
@@ -94,12 +93,5 @@ public class AppController {
             case GameOverActions.TO_MENU:
                 showMainMenu();
         }
-    }
-
-
-    private void setPanel(JPanel panel) {
-        frame.setContentPane(panel);
-        frame.revalidate();
-        frame.repaint();
     }
 }

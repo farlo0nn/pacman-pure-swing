@@ -1,24 +1,28 @@
 package model;
 
+import dto.GameExitData;
+import model.api.GameModel;
+import model.entities.*;
+import model.utils.BoardLoader;
+import utils.game.BoardSize;
+import model.utils.GhostColor;
+import model.utils.GhostPathBuilder;
+import model.utils.BoostType;
+
 import dto.EntityRenderData;
 import dto.GameRenderData;
 
-import model.utils.BoostType;
 import utils.EntityType;
 import utils.game.GameStatus;
-import model.utils.GhostColor;
-import model.utils.GhostPathBuilder;
 import utils.MovementDirection;
-
-import model.entities.*;
 
 import java.util.*;
 import java.util.function.Consumer;
 
-public class GameModel {
+public class GameLogic implements GameModel {
 
-    private final char[][] map;
-    private int tileSize;
+    private char[][] map;
+    private BoardSize boardSize;
     private HashSet<Block> walls;
     private RedGhost redGhost;
     private ArrayList<RandomlyMovingGhost> ghosts;
@@ -36,14 +40,35 @@ public class GameModel {
     private Consumer<EntityType> boostsListener;
     private boolean pacmanLastUpdated;
 
-    public GameModel(char[][] map, int tileSize, Consumer<EntityType> boostsListener) {
-        this.map = map;
+    public GameLogic(BoardSize boardSize) {
+        this.boardSize = boardSize;
+        initSize(boardSize);
         this.turnPoints = GhostPathBuilder.getTurnPoints(map);
         initEntities(map);
         this.lives = 3;
         this.score = 0;
         this.status = GameStatus.RUNNING;
+    }
+
+    public void setBoostsListener(Consumer<EntityType> boostsListener) {
         this.boostsListener = boostsListener;
+    }
+
+    private void initSize(BoardSize boardSize) {
+        switch (boardSize) {
+            case SMALL -> {
+                this.map = BoardLoader.loadBoard("/board/boards/small.csv");
+                break;
+            }
+            case MEDIUM -> {
+                this.map = BoardLoader.loadBoard("/board/boards/medium.csv");
+                break;
+            }
+            case LARGE -> {
+                this.map = BoardLoader.loadBoard("/board/boards/large.csv");
+                break;
+            }
+        }
     }
 
     public void spawnBoost() {
@@ -113,7 +138,7 @@ public class GameModel {
         }
     }
 
-    public GameRenderData updateGhosts() {
+    public void updateGhosts() {
         for (RandomlyMovingGhost ghost : ghosts) {
             if (!ghost.exitingBox() && !ghost.getTile().equals(ghost.lastTurnTile) && turnPoints.containsKey(ghost.getTile())){
                 ghost.changeDirection(turnPoints.get(ghost.getTile()));
@@ -138,10 +163,9 @@ public class GameModel {
         }
 
         redGhost.update();
-        return toRenderDTO();
     }
 
-    public GameRenderData updatePacman(MovementDirection pacmanRequestedDirection) {
+    public void updatePacman(MovementDirection pacmanRequestedDirection) {
         if (pacmanRequestedDirection != null) {
             pacman.setRequestedDirection(pacmanRequestedDirection);
         }
@@ -154,8 +178,6 @@ public class GameModel {
         else {
             pacmanLastUpdated = false;
         }
-
-        return toRenderDTO();
     }
 
     private void pelletCollisions() {
@@ -378,8 +400,18 @@ public class GameModel {
         ghosts.add(ghost);
     }
 
+    @Override
     public void setSpeedBoosted(boolean boosted){
         this.speedBoosted = boosted;
+    }
+
+    @Override
+    public GameExitData getGameInfo(){
+        return new GameExitData(
+                status,
+                score,
+                boardSize
+        );
     }
 }
 

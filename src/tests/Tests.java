@@ -1,5 +1,5 @@
 package tests;
-import controller.utils.BoardLoader;
+import model.utils.BoardLoader;
 import model.entities.Tile;
 import model.utils.GhostPathBuilder;
 import org.junit.jupiter.api.Test;

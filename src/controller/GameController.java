@@ -1,17 +1,16 @@
 package controller;
 
+import controller.interfaces.GameModelListener;
+import controller.interfaces.GameViewListener;
+import dto.GameExitData;
 import dto.GameRenderData;
 
-import model.GameModel;
+import model.api.GameModel;
 import utils.EntityType;
 import utils.MovementDirection;
 
+import view.api.GameView;
 
-import view.GameContainer;
-import view.utils.UIConstants;
-
-import controller.utils.BoardLoader;
-import controller.utils.BoardSizes;
 import controller.utils.timing.GameTimer;
 
 import utils.game.GameStatus;
@@ -22,23 +21,24 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class GameController {
-    private final GameContainer gameContainer;
+public class GameController implements GameViewListener, GameModelListener {
+    private final GameView gameView;
     private final GameModel gameModel;
     private int tileSize;
     private char[][] map;
-    private final Consumer<GameStatus> statusConsumer;
+    private final Consumer<GameExitData> statusConsumer;
     private MovementDirection pacmanRequestedDirection;
     private final ArrayList<GameTimer> timers;
     Thread boostThread;
 
-    public GameController(BoardSizes boardSize, Consumer<GameStatus> statusConsumer) {
-        initSize(boardSize);
-
-        this.gameModel = new GameModel(map, tileSize, this::onBoostSpawn);
-        this.gameContainer = new GameContainer(tileSize, this::onInput);
+    public GameController(GameView gameView, GameModel gameModel, Consumer<GameExitData> statusConsumer) {
+        this.gameView = gameView;
+        this.gameModel = gameModel;
         this.statusConsumer = statusConsumer;
         this.timers = new ArrayList<>();
+
+        this.gameModel.setBoostsListener(this::onBoostSpawned);
+        this.gameView.setInputListener(this::onInput);
 
         timers.add(new GameTimer(50, this::updateGame));
         timers.add(new GameTimer(200, this::updateGhosts));
@@ -51,7 +51,8 @@ public class GameController {
         }
     }
 
-    private void onInput(Integer keyCode) {
+    @Override
+    public void onInput(Integer keyCode) {
         switch (keyCode) {
             case 27 -> stopGame();
             case 37 -> pacmanRequestedDirection = MovementDirection.LEFT;
@@ -61,7 +62,8 @@ public class GameController {
         }
     }
 
-    private void onBoostSpawn(EntityType boostType) {
+    @Override
+    public void onBoostSpawned(EntityType boostType) {
         if (Objects.requireNonNull(boostType) == EntityType.SPEED_BOOST) {
             boostThread = new Thread(() -> {
                 synchronized (gameModel) {
@@ -80,26 +82,6 @@ public class GameController {
         }
     }
 
-    private void initSize(BoardSizes boardSize) {
-        switch (boardSize) {
-            case SMALL -> {
-                tileSize = UIConstants.WINDOW_WIDTH/28;
-                map = BoardLoader.loadBoard("/board/boards/small.csv");
-                break;
-            }
-            case MEDIUM -> {
-                tileSize = UIConstants.WINDOW_WIDTH/42;
-                map = BoardLoader.loadBoard("/board/boards/medium.csv");
-                break;
-            }
-            case LARGE -> {
-                tileSize = UIConstants.WINDOW_WIDTH/56;
-                map = BoardLoader.loadBoard("/board/boards/large.csv");
-                break;
-            }
-        }
-    }
-
     private void updateGame() {
         synchronized (gameModel) {
             GameRenderData dto = gameModel.update();
@@ -107,8 +89,9 @@ public class GameController {
                 stopGame();
                 return;
             }
-            synchronized (gameContainer) {
-                SwingUtilities.invokeLater(() -> {gameContainer.update(dto);});
+            synchronized (gameView) {
+                SwingUtilities.invokeLater(() -> {
+                    gameView.render(dto);});
             }
         }
 
@@ -134,8 +117,8 @@ public class GameController {
     }
 
     private void updateHud() {
-        synchronized (gameContainer) {
-            SwingUtilities.invokeLater(gameContainer::updateHud);
+        synchronized (gameView) {
+            SwingUtilities.invokeLater(gameView::updateHUD);
         }
     }
 
@@ -148,10 +131,7 @@ public class GameController {
             }
         }
 
-        this.statusConsumer.accept(GameStatus.OVER);
-    }
-
-    public GameContainer getGameContainer() {
-        return this.gameContainer;
+        GameExitData exitDTO = gameModel.getGameInfo();
+        this.statusConsumer.accept(exitDTO);
     }
 }
