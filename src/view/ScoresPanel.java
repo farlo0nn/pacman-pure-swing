@@ -6,12 +6,12 @@ import view.components.ImageLabelButton;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class ScoresPanel extends JPanel {
 
-    public ScoresPanel(ArrayList<String> scores, Consumer<ScoresActions> scoresActionsConsumer) {
+    public ScoresPanel(List<String> scores, Consumer<ScoresActions> scoresActionsConsumer) {
 
         setBackground(Color.BLACK);
         setLayout(new GridLayout(2,1));

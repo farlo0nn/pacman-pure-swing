@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 public class GameLogic implements GameModel {
 
     private char[][] map;
-    private BoardSize boardSize;
+    private final BoardSize boardSize;
     private HashSet<Block> walls;
     private RedGhost redGhost;
     private ArrayList<RandomlyMovingGhost> ghosts;

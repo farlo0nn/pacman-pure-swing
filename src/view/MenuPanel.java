@@ -9,9 +9,6 @@ import java.awt.*;
 import java.util.function.Consumer;
 
 public class MenuPanel extends JPanel {
-    public static final int TILE_SIZE = 24;
-    public static final int WIDTH = 30;
-    public static final int HEIGHT = 30;
 
     public MenuPanel(Consumer<MainMenuActions> actionConsumer) {
         setBackground(Color.BLACK);

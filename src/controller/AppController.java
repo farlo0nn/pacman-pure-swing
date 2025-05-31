@@ -16,6 +16,7 @@ import utils.game.GameStatus;
 import utils.game.ScoresActions;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class AppController {
@@ -49,7 +50,7 @@ public class AppController {
 
 
     public void showScores() {
-        ArrayList<String> scores = fileManager.loadScores();
+        List<String> scores = fileManager.loadScores();
         uiManager.setPanel(new ScoresPanel(scores, this::onScoresSelector));
     }
     private void onScoresSelector(ScoresActions action) {
