@@ -26,19 +26,19 @@ public class RedGhost extends AnimatedEntity {
     }
 
     public boolean reachedTarget() {
-
+        System.out.println(target + " " + direction);
         if(target == null) return true;
-
-        if (target.equals(tile)) {
+        else if (target.equals(tile)){
+            target = null;
             return true;
         }
-        else {
-            return false;
-        }
+        getNextDirection(target);
+        return false;
     }
 
     public void setTarget(Tile target) {
         this.target = target;
+        System.out.println(target);
         getNextDirection(target);
     }
 

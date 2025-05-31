@@ -1,6 +1,5 @@
 package controller.utils.timing;
 
-
 public class GameTimer {
 
     private Thread thread;
@@ -15,6 +14,7 @@ public class GameTimer {
     }
 
     private void tick(long intervalMillis) {
+        if (Thread.currentThread().isInterrupted()) return;
         long startExec = System.currentTimeMillis();
         task.run();
         long endExec = System.currentTimeMillis();
@@ -24,9 +24,13 @@ public class GameTimer {
         if (sleepTime > 0) {
             try {
                 Thread.sleep(sleepTime);
-            } catch (IllegalArgumentException | InterruptedException e) {
+            } catch (IllegalArgumentException e) {
                 // TODO logging
+            } catch (InterruptedException e ) {
+                Thread.currentThread().interrupt();
             }
+        } else {
+            Thread.yield();
         }
         currentTick++;
     }

@@ -18,9 +18,9 @@ public class GameContainer extends JPanel implements GameView {
     public GameContainer(BoardSize size) {
         int tileSize = 0;
         switch (size) {
-            case SMALL -> tileSize = 24;
-            case MEDIUM -> tileSize = 16;
-            case LARGE -> tileSize = 12;
+            case SMALL -> tileSize =48;
+            case MEDIUM -> tileSize = 24;
+            case LARGE -> tileSize = 16;
         }
         setLayout(new GridBagLayout());
         setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.WINDOW_HEIGHT));

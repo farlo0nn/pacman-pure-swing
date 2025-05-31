@@ -91,39 +91,29 @@ public class GamePanel extends JPanel {
             public void keyPressed(KeyEvent e) {
                 Integer key = null;
                 key = e.getKeyCode();
-
-                if(key != null) {
-                    inputConsumer.accept(key);
-                }
+                inputConsumer.accept(key);
             }
         });
     }
 
     public void renderBoard(ArrayList<EntityRenderData> dtos) {
-        removeAll();
 
-        viewBoard = new HashMap<>();
-
-        for (EntityRenderData dto : dtos) {
-            TileComponent tile;
-            if (dto.frame() != -1) {
-                tile = new TileComponent(dto.type(), tileSize, animatedFrames.get(dto.type()).get(dto.direction())[dto.frame()]);
-            } else {
-                tile = new TileComponent(dto.type(), tileSize, staticFrames.get(dto.type()));
-            }
-
-            setTile(dto.x(), dto.y(), tile);
+        for (TileComponent tile : viewBoard.values()) {
+            tile.setType(EntityType.EMPTY);
         }
 
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                Map.Entry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(col, row);
-                TileComponent tile = viewBoard.getOrDefault(key, new TileComponent(EntityType.EMPTY, tileSize));
-                this.add(tile);
+        for(EntityRenderData dto : dtos) {
+            Map.Entry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(dto.x(), dto.y());
+            TileComponent tile = viewBoard.get(key);
+
+            if (tile != null) {
+                Image img = dto.frame() != -1
+                        ? animatedFrames.get(dto.type()).get(dto.direction())[dto.frame()]
+                        : staticFrames.get(dto.type());
+                tile.updateImage(img);
             }
         }
 
-        revalidate();
         repaint();
     }
 

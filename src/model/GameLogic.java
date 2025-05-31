@@ -72,10 +72,9 @@ public class GameLogic implements GameModel {
     }
 
     public void spawnBoost() {
-        if (Math.random()<=0.75) {
-            System.out.println("BOOST ADDED");
+        if (Math.random()<=0.25) {
             Tile boostSpawn = ghosts.get(new Random().nextInt(ghosts.size())).getTile();
-            boosts.add(new Boost(boostSpawn.x, boostSpawn.y, BoostType.SPEED));
+            boosts.add(new Boost(boostSpawn.x, boostSpawn.y, BoostType.random()));
         }
     }
 
@@ -124,19 +123,6 @@ public class GameLogic implements GameModel {
         }
     }
 
-    private void portalCollisions() {
-        for (Portal portal : portals) {
-            if (pacman.collides(portal)) {
-                pacman.teleport(portal.getOther().getTile());
-            }
-            for (RandomlyMovingGhost ghost : ghosts) {
-                if (ghost.collides(portal)) {
-                    ghost.changeDirection(MovementDirection.opposite(ghost.getDirection()));
-                    ghost.lastTurnTile = new Tile(ghost.getTile().x, ghost.getTile().y);
-                }
-            }
-        }
-    }
 
     public void updateGhosts() {
         for (RandomlyMovingGhost ghost : ghosts) {
@@ -145,8 +131,14 @@ public class GameLogic implements GameModel {
                 ghost.lastTurnTile = new Tile(ghost.getTile().x, ghost.getTile().y);
             }
 
-            ghost.update();
+            for (Portal portal : portals) {
+                if (ghost.collides(portal)) {
+                    ghost.changeDirection(MovementDirection.opposite(ghost.getDirection()));
+                    ghost.lastTurnTile = new Tile(ghost.getTile().x, ghost.getTile().y);
+                }
+            }
 
+            ghost.update();
         }
 
         if (redGhost.reachedTarget()) {
@@ -171,13 +163,30 @@ public class GameLogic implements GameModel {
         }
 
         if (!pacmanLastUpdated || speedBoosted) {
-            System.out.println(speedBoosted);
             pacman.update();
             pacmanLastUpdated = true;
         }
         else {
             pacmanLastUpdated = false;
         }
+
+        for (Portal portal : portals) {
+            if (pacman.collides(portal)) {
+                pacman.teleport(portal.getOther().getTile());
+            }
+        }
+
+
+        for (RandomlyMovingGhost ghost : ghosts) {
+            if (pacman.getTile().equals(ghost.getTile())) {
+                resetAfterCollision();
+            }
+        }
+
+        if (pacman.getTile().equals(redGhost.getTile())) {
+            resetAfterCollision();
+        }
+
     }
 
     private void pelletCollisions() {
@@ -220,27 +229,12 @@ public class GameLogic implements GameModel {
 
         wallCollisions();
         boostsCollisions();
-        portalCollisions();
         pelletCollisions();
-
-        for (RandomlyMovingGhost ghost : ghosts) {
-            if (pacman.getTile().equals(ghost.getTile())) {
-                // TODO
-                resetAfterCollision();
-            }
-        }
-
-        if (pacman.getTile().equals(redGhost.getTile())) {
-            // TODO
-            resetAfterCollision();
-        }
 
         return toRenderDTO();
     }
 
     public void resetAfterCollision(){
-
-        System.out.println(pacman.getTile());
 
         pacman.reset();
         ghosts.forEach(Entity::reset);
@@ -282,6 +276,24 @@ public class GameLogic implements GameModel {
             ));
         }
 
+        for (Boost boost : boosts) {
+
+            EntityType type;
+            switch (boost.getType()){
+                case LIVES -> type = EntityType.LIVES_BOOST;
+                case SCORE -> type = EntityType.SCORE_BOOST;
+                default -> type = EntityType.SPEED_BOOST;
+            }
+
+            entities.add( new EntityRenderData(
+                    type,
+                    boost.getTile().x,
+                    boost.getTile().y,
+                    MovementDirection.NONE,
+                    -1
+            ));
+        }
+
         for (RandomlyMovingGhost ghost : ghosts) {
             EntityType type;
             switch (ghost.getColor()) {
@@ -313,24 +325,6 @@ public class GameLogic implements GameModel {
                 redGhost.getDirection(),
                 redGhost.getCurrentFrame()
         ));
-
-        for (Boost boost : boosts) {
-
-            EntityType type;
-            switch (boost.getType()){
-                case LIVES -> type = EntityType.LIVES_BOOST;
-                case SCORE -> type = EntityType.SCORE_BOOST;
-                default -> type = EntityType.SPEED_BOOST;
-            }
-
-            entities.add( new EntityRenderData(
-                type,
-                boost.getTile().x,
-                boost.getTile().y,
-                MovementDirection.NONE,
-                -1
-            ));
-        }
 
 
         return new GameRenderData(map, entities, score, lives);
@@ -414,4 +408,3 @@ public class GameLogic implements GameModel {
         );
     }
 }
-

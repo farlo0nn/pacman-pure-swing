@@ -76,11 +76,13 @@ public class AppController {
     }
 
     private void onGameStatus(GameExitData data) {
-        System.out.println("STOPPED");
         if (Objects.requireNonNull(data.status()) == GameStatus.OVER) {
 
             String username = uiManager.showDialogue();
-            fileManager.saveScores(username, data.size(), data.score());
+            if (username != null) {
+                fileManager.saveScores(username, data.size(), data.score());
+            }
+
             showGameOver();
         }
     }
