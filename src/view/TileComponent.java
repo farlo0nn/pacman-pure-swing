@@ -9,10 +9,12 @@ public class TileComponent extends JPanel {
     private EntityType type;
     private int size;
     private Image image;
+    private JLabel label;
     public int x;
     public int y;
 
     public TileComponent(EntityType type, int size) {
+        this.label = new JLabel();
         this.type = type;
         this.size = size;
         setLayout(new BorderLayout());
@@ -26,14 +28,20 @@ public class TileComponent extends JPanel {
         this.image = image;
         setSize(new Dimension(size, size));
         updateAppearance();
-
     }
 
     public EntityType getType() {
         return type;
     }
+    public void setType(EntityType type) {
+        this.type = type;
+        setTexture();
+    }
 
     private void setTexture() {
+        label.setIcon(null);
+        label.setHorizontalAlignment(JLabel.CENTER);
+        label.setVerticalAlignment(JLabel.CENTER);
         switch (type) {
             case WALL -> setBackground(Color.BLUE);
             case PELLET -> setBackground(Color.DARK_GRAY);
@@ -46,10 +54,10 @@ public class TileComponent extends JPanel {
             case PORTAL -> setBackground(Color.CYAN);
             default -> setBackground(Color.BLACK);
         }
+        add(label, BorderLayout.CENTER);
     }
 
     private void setTexture(Image image) {
-        JLabel label = new JLabel();
         label.setIcon(new ImageIcon(image));
         label.setHorizontalAlignment(JLabel.CENTER);
         label.setVerticalAlignment(JLabel.CENTER);
@@ -70,5 +78,8 @@ public class TileComponent extends JPanel {
         repaint();
     }
 
+    public void updateImage(Image image) {
+        label.setIcon(new ImageIcon(image));
+    }
 }
 

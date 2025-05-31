@@ -53,9 +53,7 @@ public class GhostPathBuilder {
         // we build our path from the target tile
         path.removeLast();
         Collections.reverse(path);
-//        System.out.println(start + " " + path);
         return compressPath(path);
-//        return path;
     };
 
     public static ArrayList<Tile> compressPath(ArrayList<Tile> path) {

@@ -71,14 +71,18 @@ public class AppController {
     public void showGame(BoardSize boardSize) {
         GameModel model = new GameLogic(boardSize);
         GameContainer view = new GameContainer(boardSize);
-        GameController controller = new GameController(view, model, this::onGameStatus);
         uiManager.setPanel(view);
+        GameController controller = new GameController(view, model, this::onGameStatus);
     }
 
     private void onGameStatus(GameExitData data) {
         if (Objects.requireNonNull(data.status()) == GameStatus.OVER) {
+
             String username = uiManager.showDialogue();
-            fileManager.saveScores(username, data.size(), data.score());
+            if (username != null) {
+                fileManager.saveScores(username, data.size(), data.score());
+            }
+
             showGameOver();
         }
     }
