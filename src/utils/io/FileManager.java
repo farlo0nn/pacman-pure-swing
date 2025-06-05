@@ -10,78 +10,45 @@ import java.util.Objects;
 
 public class FileManager {
 
-    public FileManager() {
-    }
+    public List<ScoreEntry> loadScores() {
+        File file = new File(Objects.requireNonNull(this.getClass().getResource("/scores/scores.bin")).getPath());
 
-    public List<String> loadScores() {
-        File file = new File(Objects.requireNonNull(this.getClass().getResource("/scores/scores.txt")).getPath());
-
-        List<String> scores = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader((new FileReader(file)))) {
-
-            String line;
-            while((line = reader.readLine()) != null){
-                scores.add(line);
-            }
-
-        } catch (IOException e){
-            System.err.println("Failed to load score: " + e.getMessage());
-            throw new RuntimeException(e);
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            return (ArrayList<ScoreEntry>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("failed to load scores: " + e.getMessage());
+            return new ArrayList<>();
         }
-
-        return scores;
     }
 
     public void saveScores(String username, BoardSize size, int newScore) {
 
-        File file = new File(Objects.requireNonNull(this.getClass().getResource("/scores/scores.txt")).getPath());
+        File file = new File(Objects.requireNonNull(this.getClass().getResource("/scores/scores.bin")).getPath());
 
-        List<ScoreEntry> entries = new ArrayList<>();
+        List<ScoreEntry> entries = loadScores();
+        ScoreEntry newEntry = new ScoreEntry(username.strip(), size, newScore);
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(" ");
-                if (parts.length == 3) {
-                    String user = parts[0];
-                    BoardSize boardSize = BoardSize.valueOf(parts[1]);
-                    int score = Integer.parseInt(parts[2]);
-                    entries.add(new ScoreEntry(user, boardSize, score));
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("failed to load scores: " + e.getMessage());
-        }
-
-        ScoreEntry newEntry = new ScoreEntry(username, size, newScore);
-
-        boolean updatedEntry = false;
-
+        boolean updated = false;
         for (ScoreEntry entry : entries) {
-            if (
-                newEntry.username.equals(entry.username) &&
-                newEntry.size.equals(entry.size) &&
-                newEntry.score > entry.score
-            ) {
-                entry.score = newEntry.score;
-                updatedEntry = true;
+            if (entry.username.equals(newEntry.username) && entry.mapSize == newEntry.mapSize) {
+                if (newEntry.score > entry.score) {
+                    entry.score = newEntry.score;
+                }
+                updated = true;
+                break;
             }
         }
 
-        if (!updatedEntry) {
+        if (!updated) {
             entries.add(newEntry);
         }
 
         Collections.sort(entries);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            for (ScoreEntry entry : entries) {
-                writer.write(entry.toString());
-                writer.newLine();
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            oos.writeObject(entries);
         } catch (IOException e) {
-            System.err.println("failed to save scores: " + e.getMessage());
-            throw new RuntimeException(e);
+            System.out.println("failed to save scores: " + e.getMessage());
         }
     }
 }

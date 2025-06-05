@@ -4,6 +4,7 @@ import dto.GameExitData;
 import model.GameLogic;
 import model.api.GameModel;
 
+import utils.io.ScoreEntry;
 import view.*;
 import view.UIManager;
 
@@ -15,7 +16,6 @@ import utils.game.GameOverActions;
 import utils.game.GameStatus;
 import utils.game.ScoresActions;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,6 +26,7 @@ public class AppController {
 
     public AppController() {
         this.uiManager = new UIManager();
+
         this.fileManager = new FileManager();
         showMainMenu();
     }
@@ -50,7 +51,7 @@ public class AppController {
 
 
     public void showScores() {
-        List<String> scores = fileManager.loadScores();
+        List<ScoreEntry> scores = fileManager.loadScores();
         uiManager.setPanel(new ScoresPanel(scores, this::onScoresSelector));
     }
     private void onScoresSelector(ScoresActions action) {
@@ -72,8 +73,11 @@ public class AppController {
     public void showGame(BoardSize boardSize) {
         GameModel model = new GameLogic(boardSize);
         GameContainer view = new GameContainer(boardSize);
+        uiManager.setPanel(new MenuPanel(this::onMainMenuAction));
+        uiManager.changeFrame();
         uiManager.setPanel(view);
         GameController controller = new GameController(view, model, this::onGameStatus);
+        uiManager.setExitRequestListener(controller::stopGame);
     }
 
     private void onGameStatus(GameExitData data) {
@@ -83,13 +87,9 @@ public class AppController {
             if (username != null) {
                 fileManager.saveScores(username, data.size(), data.score());
             }
-
-            showGameOver();
+            uiManager.changeFrame();
+            uiManager.setPanel(new GameOverPanel(this::onGameOverActions));
         }
-    }
-
-    public void showGameOver() {
-        uiManager.setPanel(new GameOverPanel(this::onGameOverActions));
     }
 
     private void onGameOverActions(GameOverActions action){

@@ -13,10 +13,7 @@ import view.api.GameView;
 
 import controller.utils.timing.GameTimer;
 
-import utils.game.GameStatus;
-
-
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -24,8 +21,6 @@ import java.util.function.Consumer;
 public class GameController implements GameViewListener, GameModelListener {
     private final GameView gameView;
     private final GameModel gameModel;
-    private int tileSize;
-    private char[][] map;
     private final Consumer<GameExitData> statusConsumer;
     private MovementDirection pacmanRequestedDirection;
     private final ArrayList<GameTimer> timers;
@@ -35,6 +30,7 @@ public class GameController implements GameViewListener, GameModelListener {
         this.gameView = gameView;
         this.gameModel = gameModel;
         this.statusConsumer = statusConsumer;
+        gameView.setStaticTiles(gameModel.getStaticDTO());
         this.timers = new ArrayList<>();
 
         this.gameModel.setBoostsListener(this::onBoostSpawned);

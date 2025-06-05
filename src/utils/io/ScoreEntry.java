@@ -2,14 +2,16 @@ package utils.io;
 
 import utils.game.BoardSize;
 
-public class ScoreEntry implements Comparable<ScoreEntry> {
-    String username;
-    BoardSize size;
-    int score;
+import java.io.Serializable;
+
+public class ScoreEntry implements Serializable, Comparable<ScoreEntry> {
+    public String username;
+    public BoardSize mapSize;
+    public int score;
 
     public ScoreEntry(String username, BoardSize size, int score) {
         this.username = username;
-        this.size = size;
+        this.mapSize = size;
         this.score = score;
 
     }
@@ -21,6 +23,6 @@ public class ScoreEntry implements Comparable<ScoreEntry> {
 
     @Override
     public String toString() {
-        return username + " " + size + " " + score;
+        return username + " " + mapSize + " " + score;
     }
 }

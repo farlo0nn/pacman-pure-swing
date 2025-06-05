@@ -3,9 +3,9 @@ package controller.utils.timing;
 public class GameTimer {
 
     private Thread thread;
-    private long intervalMillis;
+    private final long intervalMillis;
     private long currentTick;
-    private Runnable task;
+    private final Runnable task;
     private volatile boolean running = false;
 
     public GameTimer(long intervalMillis, Runnable task) {

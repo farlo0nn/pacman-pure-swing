@@ -5,6 +5,7 @@ import model.utils.GhostPathBuilder;
 import org.junit.jupiter.api.Test;
 import utils.game.BoardSize;
 import utils.io.FileManager;
+import utils.io.ScoreEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +37,8 @@ public class Tests {
     @Test
     void loadScores() {
         FileManager fileManager = new FileManager();
-        List<String> scores = fileManager.loadScores();
-        for (String score : scores) {
+        List<ScoreEntry> scores = fileManager.loadScores();
+        for (ScoreEntry score : scores) {
             System.out.println(score);
         }
     }
