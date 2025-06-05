@@ -1,4 +1,3 @@
-//import controller.AppController;
 import controller.AppController;
 import javax.swing.*;
 

@@ -14,8 +14,10 @@ public class HudPanel extends JPanel {
     public HudPanel() {
 
         setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.HUD_HEIGHT));
+        setMinimumSize(new Dimension(0, 60));
         setBackground(Color.BLACK);
         setLayout(new GridLayout(1, 3));
+
         JLabel scoreLabel = new JLabel();
         scoreLabel.setFont(new Font("Sans", Font.BOLD, 16));
         scoreLabel.setForeground(Color.YELLOW);

@@ -5,61 +5,74 @@ import dto.EntityRenderData;
 import utils.MovementDirection;
 import utils.EntityType;
 import utils.ImageManager;
+import view.utils.Coord;
+import view.utils.Pair;
 import view.utils.UIConstants;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.AbstractMap;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class GamePanel extends JPanel {
     private final int tileSize;
-    private HashMap<Map.Entry<Integer, Integer>, TileComponent> viewBoard;
-    private char[][] map;
+    private final TileComponent[][] viewBoard;
+    private HashMap<EntityType, Pair<Coord, EntityType>> hoveredCells;
     private final int rows;
     private final int cols;
     private Consumer<Integer> inputConsumer;
-    private final HashMap<EntityType, HashMap<MovementDirection, Image[]>> animatedFrames;
-    private final HashMap<EntityType, Image> staticFrames;
+    private HashMap<EntityType, HashMap<MovementDirection, BufferedImage[]>> animatedFrames;
+    private HashMap<EntityType, BufferedImage> staticFrames;
+    private Dimension currentSize;
+    private ArrayList<EntityRenderData> staticTiles;
+    private final ImageManager imageManager;
 
     public GamePanel(int tileSize) {
-        ImageManager imageManager = new ImageManager();
-        this.animatedFrames = new HashMap<>();
-        this.staticFrames = new HashMap<>();
-
-        animatedFrames.put(EntityType.PACMAN, imageManager.getPacmanFrames(tileSize));
-        animatedFrames.put(EntityType.RED_GHOST, imageManager.getGhostFrames(EntityType.RED_GHOST, tileSize));
-        animatedFrames.put(EntityType.YELLOW_GHOST, imageManager.getGhostFrames(EntityType.YELLOW_GHOST, tileSize));
-        animatedFrames.put(EntityType.BLUE_GHOST, imageManager.getGhostFrames(EntityType.BLUE_GHOST, tileSize));
-        animatedFrames.put(EntityType.PINK_GHOST, imageManager.getGhostFrames(EntityType.PINK_GHOST, tileSize));
-        staticFrames.put(EntityType.WALL, imageManager.getWallImage(tileSize));
-        staticFrames.put(EntityType.PELLET, imageManager.getPelletImage(tileSize));
-        staticFrames.put(EntityType.POWER_PELLET, imageManager.getPowerPelletImage(tileSize));
-        staticFrames.put(EntityType.SCORE_BOOST, imageManager.getScoreBoostImage(tileSize));
-        staticFrames.put(EntityType.SPEED_BOOST, imageManager.getSpeedBoostImage(tileSize));
-        staticFrames.put(EntityType.LIVES_BOOST, imageManager.getLivesBoostImage(tileSize));
 
         setFocusable(true);
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(UIConstants.WINDOW_WIDTH, UIConstants.GAME_PANEL_HEIGHT));
+        hoveredCells = new HashMap<>();
+        imageManager = new ImageManager();
+
+        initFrames(tileSize);
 
         rows = getPreferredSize().height/tileSize;
         cols = getPreferredSize().width/tileSize;
         this.tileSize = tileSize;
         setLayout(new GridLayout(rows, cols));
-        viewBoard = new HashMap<>();
-
-        initEmptyBoard();
+        viewBoard = new TileComponent[rows][cols];
 
         setFocusable(true);
         requestFocusInWindow();
         setupInputHandling();
+    }
+
+    public void initFrames(int width, int height){
+
+        this.animatedFrames = new HashMap<>();
+        this.staticFrames = new HashMap<>();
+
+        animatedFrames.put(EntityType.PACMAN, imageManager.getPacmanFrames(width, height));
+        animatedFrames.put(EntityType.RED_GHOST, imageManager.getGhostFrames(EntityType.RED_GHOST, width, height));
+        animatedFrames.put(EntityType.YELLOW_GHOST, imageManager.getGhostFrames(EntityType.YELLOW_GHOST, width, height));
+        animatedFrames.put(EntityType.BLUE_GHOST, imageManager.getGhostFrames(EntityType.BLUE_GHOST, width, height));
+        animatedFrames.put(EntityType.PINK_GHOST, imageManager.getGhostFrames(EntityType.PINK_GHOST, width, height));
+        staticFrames.put(EntityType.WALL, imageManager.getWallImage(width, height));
+        staticFrames.put(EntityType.PELLET, imageManager.getPelletImage(width, height));
+        staticFrames.put(EntityType.POWER_PELLET, imageManager.getPowerPelletImage(width, height));
+        staticFrames.put(EntityType.SCORE_BOOST, imageManager.getBoostImage(EntityType.SCORE_BOOST, width, height));
+        staticFrames.put(EntityType.SPEED_BOOST, imageManager.getBoostImage(EntityType.SPEED_BOOST, width, height));
+        staticFrames.put(EntityType.LIVES_BOOST, imageManager.getBoostImage(EntityType.LIVES_BOOST, width, height));
+    }
+
+    public void initFrames(int tileSize) {
+        initFrames(tileSize, tileSize);
     }
 
     public void setInputConsumer(Consumer<Integer> inputConsumer){
@@ -71,18 +84,6 @@ public class GamePanel extends JPanel {
     public void addNotify() {
         super.addNotify();
         requestFocusInWindow();
-    }
-
-
-    private void initEmptyBoard() {
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                TileComponent tile = new TileComponent(EntityType.EMPTY, tileSize);
-                Map.Entry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(col, row);
-                viewBoard.put(key, tile);
-                this.add(tile);
-            }
-        }
     }
 
     private void setupInputHandling() {
@@ -98,33 +99,77 @@ public class GamePanel extends JPanel {
 
     public void renderBoard(ArrayList<EntityRenderData> dtos) {
 
-        for (TileComponent tile : viewBoard.values()) {
-            tile.setType(EntityType.EMPTY);
+        if (!this.getSize().equals(this.currentSize)) {
+
+            currentSize = this.getSize();
+            initFrames(currentSize.width/cols, currentSize.height/this.rows);
+
+            for (Pair<Coord, EntityType> p : hoveredCells.values()) {
+                viewBoard[p.getLeft().y()][p.getLeft().x()].setType(p.getRight());
+                viewBoard[p.getLeft().y()][p.getLeft().x()].updateImage(staticFrames.get(p.getRight()));
+            }
+
+            for (TileComponent[] tileComponents : viewBoard) {
+                for (int col = 0; col < viewBoard[0].length; col++) {
+                    if (tileComponents[col] != null) {
+                        EntityType currentType = tileComponents[col].getType();
+                        if (currentType != EntityType.EMPTY && staticFrames.containsKey(currentType)) {
+                            tileComponents[col].updateImage(staticFrames.get(currentType));
+                        }
+                    }
+                }
+            }
+
         }
 
         for(EntityRenderData dto : dtos) {
-            Map.Entry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(dto.x(), dto.y());
-            TileComponent tile = viewBoard.get(key);
+            if (viewBoard[dto.y()][dto.x()] != null) {
+                if (EntityType.isGhost(dto.type())) {
+                    Pair<Coord, EntityType> p;
+                    if ((p = hoveredCells.get(dto.type())) != null) {
+                        viewBoard[p.getLeft().y()][p.getLeft().x()].setType(p.getRight());
+                        viewBoard[p.getLeft().y()][p.getLeft().x()].updateImage(staticFrames.get(p.getRight()));
+                    }
+                    if (!EntityType.isGhost(viewBoard[dto.y()][dto.x()].getType())) {
+                        hoveredCells.put(dto.type(), new Pair<>( new Coord(dto.x(), dto.y()),viewBoard[dto.y()][dto.x()].getType()));
+                    }
+                } else if (dto.type() == EntityType.PACMAN) {
+                    Pair<Coord, EntityType> p;
+                    if ((p = hoveredCells.get(dto.type())) != null) {
+                        viewBoard[p.getLeft().y()][p.getLeft().x()].setType(EntityType.EMPTY);
+                        viewBoard[p.getLeft().y()][p.getLeft().x()].updateImage(null);
+                    }
+                    hoveredCells.put(dto.type(), new Pair<>( new Coord(dto.x(), dto.y()),EntityType.EMPTY));
+                }
 
-            if (tile != null) {
                 Image img = dto.frame() != -1
                         ? animatedFrames.get(dto.type()).get(dto.direction())[dto.frame()]
                         : staticFrames.get(dto.type());
-                tile.updateImage(img);
+                viewBoard[dto.y()][dto.x()].setType(dto.type());
+                viewBoard[dto.y()][dto.x()].updateImage(img);
             }
         }
 
-        repaint();
     }
 
-
-    private boolean isInBounds(int r, int c) {
-        return r >= 0 && r < rows && c >= 0 && c < cols;
+    public void setStaticTiles(ArrayList<EntityRenderData> staticTiles) {
+        this.staticTiles = staticTiles;
+        initBasicBoard();
     }
 
-    public void setTile(int x, int y, TileComponent tile) {
-        Map.Entry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(x, y);
-        viewBoard.put(key, tile);
-    }
+    public void initBasicBoard() {
+        removeAll();
+        for(int rows = 0; rows < viewBoard.length; rows ++) {
+            for(int cols = 0; cols < viewBoard[0].length; cols ++) {
+                viewBoard[rows][cols] = new TileComponent(EntityType.EMPTY,tileSize);
+                this.add(viewBoard[rows][cols]);
+            }
+        }
 
+        for (EntityRenderData dto : staticTiles) {
+            viewBoard[dto.y()][dto.x()].setType(dto.type());
+            viewBoard[dto.y()][dto.x()].updateImage(staticFrames.get(dto.type()));
+        }
+
+    }
 }

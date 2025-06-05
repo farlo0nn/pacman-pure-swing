@@ -5,8 +5,10 @@ import model.utils.GhostPathBuilder;
 import org.junit.jupiter.api.Test;
 import utils.game.BoardSize;
 import utils.io.FileManager;
+import utils.io.ScoreEntry;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -35,8 +37,8 @@ public class Tests {
     @Test
     void loadScores() {
         FileManager fileManager = new FileManager();
-        ArrayList<String> scores = fileManager.loadScores();
-        for (String score : scores) {
+        List<ScoreEntry> scores = fileManager.loadScores();
+        for (ScoreEntry score : scores) {
             System.out.println(score);
         }
     }

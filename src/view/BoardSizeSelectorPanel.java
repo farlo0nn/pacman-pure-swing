@@ -11,9 +11,6 @@ import java.util.function.Consumer;
 
 
 public class BoardSizeSelectorPanel extends JPanel {
-    public static final int TILE_SIZE = 24;
-    public static final int WIDTH = 30;
-    public static final int HEIGHT = 30;
 
     public BoardSizeSelectorPanel(Consumer<BoardSize> boardSizeCallback) {
 

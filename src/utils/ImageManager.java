@@ -42,22 +42,11 @@ public class ImageManager {
         return resized;
     }
 
-    public static Image resize(Image image, int width, int height) {
-        Image tmp = image.getScaledInstance(width, height, Image.SCALE_FAST);
-        BufferedImage resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
-        Graphics2D g2d = resized.createGraphics();
-        g2d.drawImage(tmp, 0, 0, null);
-        g2d.dispose();
-
-        return resized;
-    }
-
     public BufferedImage resize(BufferedImage image, int size) {
         return resize(image, size, size);
     }
 
-    private BufferedImage[] getPacmanImages(int size) {
+    private BufferedImage[] getPacmanImages(int width, int height) {
         if (spriteSheet == null) return null;
 
 
@@ -76,25 +65,36 @@ public class ImageManager {
         };
 
         for (int i = 0; i < images.length; i++) {
-            images[i] = resize(images[i], size);
+            images[i] = resize(images[i], width, height);
         }
 
         return images;
     }
+    private BufferedImage[] getPacmanImages(int size) {
+        return getPacmanImages(size, size);
+    }
 
-    public BufferedImage getPelletImage(int imageSize) {
+
+    public BufferedImage getPelletImage(int width, int height) {
         BufferedImage pelletImage = spriteSheet.getSubimage(spriteSheetTextureSize, 9 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
-        pelletImage = resize(pelletImage, imageSize);
+        pelletImage = resize(pelletImage, width, height);
         return pelletImage;
     };
+    public BufferedImage getPelletImage(int imageSize) {
+        return getPelletImage(imageSize, imageSize);
+    }
 
-    public BufferedImage getPowerPelletImage(int imageSize) {
+
+    public BufferedImage getPowerPelletImage(int width, int height){
         BufferedImage pelletImage = spriteSheet.getSubimage(0, 9 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
-        pelletImage = this.resize(pelletImage, imageSize);
+        pelletImage = this.resize(pelletImage, width, height);
         return pelletImage;
-    };
+    }
+    public BufferedImage getPowerPelletImage(int imageSize) {
+        return getPowerPelletImage(imageSize, imageSize);
+    }
 
-    private BufferedImage[] getGhostImages(EntityType type, int size){
+    private BufferedImage[] getGhostImages(EntityType type, int width, int height){
         if (spriteSheet == null) return null;
 
         int row = 2;
@@ -117,10 +117,13 @@ public class ImageManager {
         }
 
         for (int i = 0; i < images.length; i++) {
-            images[i] = resize(images[i], size);
+            images[i] = resize(images[i], width, height);
         }
 
         return images;
+    }
+    private BufferedImage[] getGhostImages(EntityType type, int size){
+        return getGhostImages(type, size, size);
     }
 
 
@@ -129,36 +132,37 @@ public class ImageManager {
     }
 
 
-    public Image getWallImage(int size) {
+    public BufferedImage getWallImage(int width, int height) {
         try {
-            return resize(ImageIO.read(Objects.requireNonNull(ImageManager.class.getResource("/board/wall.png"))), size);
+            return resize(ImageIO.read(Objects.requireNonNull(ImageManager.class.getResource("/board/wall.png"))), width, height);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-
-    public Image getScoreBoostImage(int size) {
-        BufferedImage boostImage = spriteSheet.getSubimage(0, 8 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
-        boostImage = this.resize(boostImage, size);
-        return boostImage;
+    public BufferedImage getWallImage(int size) {
+        return getWallImage(size, size);
     }
 
-    public Image getSpeedBoostImage(int size) {
-        BufferedImage boostImage = spriteSheet.getSubimage(spriteSheetTextureSize, 8 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
-        boostImage = this.resize(boostImage, size);
+    public BufferedImage getBoostImage(EntityType type, int width, int height) {
+        int col = 0;
+        switch (type) {
+            case SCORE_BOOST -> col = 0;
+            case SPEED_BOOST -> col = 1;
+            case LIVES_BOOST -> col = 2;
+        }
+        BufferedImage boostImage = spriteSheet.getSubimage(col * spriteSheetTextureSize, 8 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
+        boostImage = this.resize(boostImage, width, height);
         return boostImage;
     }
-
-    public Image getLivesBoostImage(int size) {
-        BufferedImage boostImage = spriteSheet.getSubimage(2 * spriteSheetTextureSize, 8 * spriteSheetTextureSize, spriteSheetTextureSize, spriteSheetTextureSize);
-        boostImage = this.resize(boostImage, size);
-        return boostImage;
+    public BufferedImage getBoostImage(EntityType type, int size) {
+        return getBoostImage(type, size);
     }
 
-    public HashMap<MovementDirection, Image[]> getPacmanFrames(int size) {
-        BufferedImage[] images = getPacmanImages(size);
 
-        HashMap<MovementDirection, Image[]> pacmanFrames = new HashMap<>();
+    public HashMap<MovementDirection, BufferedImage[]> getPacmanFrames(int width, int height){
+        BufferedImage[] images = getPacmanImages(width, height);
+
+        HashMap<MovementDirection, BufferedImage[]> pacmanFrames = new HashMap<>();
 
         pacmanFrames.put(MovementDirection.RIGHT, new BufferedImage[]
                 {
@@ -187,9 +191,41 @@ public class ImageManager {
         return pacmanFrames;
     }
 
-    public HashMap<MovementDirection, Image[]> getGhostFrames(EntityType type, int size) {
-        BufferedImage[] images = getGhostImages(type, size);
-        HashMap<MovementDirection, Image[]> ghostFrames = new HashMap<>();
+    public HashMap<MovementDirection, BufferedImage[]> getPacmanFrames(int size) {
+        BufferedImage[] images = getPacmanImages(size);
+
+        HashMap<MovementDirection, BufferedImage[]> pacmanFrames = new HashMap<>();
+
+        pacmanFrames.put(MovementDirection.RIGHT, new BufferedImage[]
+                {
+                        images[0], images[1], images[2]
+                });
+
+        pacmanFrames.put(MovementDirection.LEFT, new BufferedImage[]
+                {
+                        images[0], images[3], images[4]
+                });
+
+        pacmanFrames.put(MovementDirection.UP, new BufferedImage[]
+                {
+                        images[0], images[5], images[6]
+                });
+
+        pacmanFrames.put(MovementDirection.DOWN, new BufferedImage[]
+                {
+                        images[0], images[7], images[8]
+                });
+
+        pacmanFrames.put(MovementDirection.NONE, new BufferedImage[]{
+                images[0]
+        });
+
+        return pacmanFrames;
+    }
+
+    public HashMap<MovementDirection, BufferedImage[]> getGhostFrames(EntityType type, int width, int height) {
+        BufferedImage[] images = getGhostImages(type, width, height);
+        HashMap<MovementDirection, BufferedImage[]> ghostFrames = new HashMap<>();
 
         assert images != null;
 
@@ -214,5 +250,8 @@ public class ImageManager {
         });
 
         return ghostFrames;
+    }
+    public HashMap<MovementDirection, BufferedImage[]> getGhostFrames(EntityType type, int size){
+        return getGhostFrames(type, size, size);
     }
 }

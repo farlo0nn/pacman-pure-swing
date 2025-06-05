@@ -26,7 +26,6 @@ public class RedGhost extends AnimatedEntity {
     }
 
     public boolean reachedTarget() {
-        System.out.println(target + " " + direction);
         if(target == null) return true;
         else if (target.equals(tile)){
             target = null;
@@ -38,7 +37,6 @@ public class RedGhost extends AnimatedEntity {
 
     public void setTarget(Tile target) {
         this.target = target;
-        System.out.println(target);
         getNextDirection(target);
     }
 

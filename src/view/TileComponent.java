@@ -43,16 +43,16 @@ public class TileComponent extends JPanel {
         label.setHorizontalAlignment(JLabel.CENTER);
         label.setVerticalAlignment(JLabel.CENTER);
         switch (type) {
-            case WALL -> setBackground(Color.BLUE);
-            case PELLET -> setBackground(Color.DARK_GRAY);
-            case POWER_PELLET -> setBackground(Color.GRAY);
-            case PACMAN -> setBackground(Color.YELLOW);
-            case YELLOW_GHOST -> setBackground(Color.ORANGE);
-            case BLUE_GHOST -> setBackground(Color.CYAN);
-            case PINK_GHOST -> setBackground(Color.PINK);
-            case RED_GHOST -> setBackground(Color.RED);
-            case PORTAL -> setBackground(Color.CYAN);
-            default -> setBackground(Color.BLACK);
+            case WALL -> label.setBackground(Color.BLUE);
+            case PELLET -> label.setBackground(Color.DARK_GRAY);
+            case POWER_PELLET -> label.setBackground(Color.GRAY);
+            case PACMAN -> label.setBackground(Color.YELLOW);
+            case YELLOW_GHOST -> label.setBackground(Color.ORANGE);
+            case BLUE_GHOST -> label.setBackground(Color.CYAN);
+            case PINK_GHOST -> label.setBackground(Color.PINK);
+            case RED_GHOST -> label.setBackground(Color.RED);
+            case PORTAL -> label.setBackground(Color.CYAN);
+            default -> label.setBackground(Color.BLACK);
         }
         add(label, BorderLayout.CENTER);
     }
@@ -79,7 +79,12 @@ public class TileComponent extends JPanel {
     }
 
     public void updateImage(Image image) {
+        if (image == null) {
+            label.setIcon(null);
+            return;
+        }
         label.setIcon(new ImageIcon(image));
+        label.setBackground(Color.BLACK);
     }
 }
 

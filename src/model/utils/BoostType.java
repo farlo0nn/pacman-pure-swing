@@ -9,6 +9,6 @@ public enum BoostType {
 
     public static BoostType random()  {
         BoostType[] values = BoostType.values();
-        return values[new Random().nextInt(values.length-1)];
+        return values[new Random().nextInt(values.length)];
     }
 }

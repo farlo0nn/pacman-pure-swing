@@ -2,16 +2,17 @@ package view;
 
 import utils.ImageManager;
 import utils.game.ScoresActions;
+import utils.io.ScoreEntry;
 import view.components.ImageLabelButton;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class ScoresPanel extends JPanel {
 
-    public ScoresPanel(ArrayList<String> scores, Consumer<ScoresActions> scoresActionsConsumer) {
+    public ScoresPanel(List<ScoreEntry> scores, Consumer<ScoresActions> scoresActionsConsumer) {
 
         setBackground(Color.BLACK);
         setLayout(new GridLayout(2,1));
@@ -24,8 +25,8 @@ public class ScoresPanel extends JPanel {
         textArea.setEditable(false);
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 20));
 
-        for (String score : scores) {
-            textArea.append(score + "\n");
+        for (ScoreEntry score : scores) {
+            textArea.append(score.username + "|" + score.mapSize + "|" + score.score + "\n");
         }
 
         JScrollPane scrollPane = new JScrollPane(textArea);

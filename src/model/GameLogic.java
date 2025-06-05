@@ -15,6 +15,7 @@ import dto.GameRenderData;
 import utils.EntityType;
 import utils.game.GameStatus;
 import utils.MovementDirection;
+import model.entities.Tile;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -22,7 +23,7 @@ import java.util.function.Consumer;
 public class GameLogic implements GameModel {
 
     private char[][] map;
-    private BoardSize boardSize;
+    private final BoardSize boardSize;
     private HashSet<Block> walls;
     private RedGhost redGhost;
     private ArrayList<RandomlyMovingGhost> ghosts;
@@ -72,9 +73,11 @@ public class GameLogic implements GameModel {
     }
 
     public void spawnBoost() {
-        if (Math.random()<=0.25) {
-            Tile boostSpawn = ghosts.get(new Random().nextInt(ghosts.size())).getTile();
-            boosts.add(new Boost(boostSpawn.x, boostSpawn.y, BoostType.random()));
+        if (!ghosts.isEmpty()) {
+            if (Math.random()<=0.25) {
+                Tile boostSpawn = ghosts.get(new Random().nextInt(ghosts.size())).getTile();
+                boosts.add(new Boost(boostSpawn.x, boostSpawn.y, BoostType.random()));
+            }
         }
     }
 
@@ -176,17 +179,6 @@ public class GameLogic implements GameModel {
             }
         }
 
-
-        for (RandomlyMovingGhost ghost : ghosts) {
-            if (pacman.getTile().equals(ghost.getTile())) {
-                resetAfterCollision();
-            }
-        }
-
-        if (pacman.getTile().equals(redGhost.getTile())) {
-            resetAfterCollision();
-        }
-
     }
 
     private void pelletCollisions() {
@@ -214,6 +206,18 @@ public class GameLogic implements GameModel {
         pelletsLeft-=powerPelletsToRemove.size();
     }
 
+    public void pacmanGhostsCollisions() {
+        for (RandomlyMovingGhost ghost : ghosts) {
+            if (pacman.getTile().equals(ghost.getTile())) {
+                resetAfterCollision();
+            }
+        }
+
+        if (pacman.getTile().equals(redGhost.getTile())) {
+            resetAfterCollision();
+        }
+    }
+
     public GameRenderData update() {
 
         if (status != GameStatus.RUNNING) return null;
@@ -230,6 +234,7 @@ public class GameLogic implements GameModel {
         wallCollisions();
         boostsCollisions();
         pelletCollisions();
+        pacmanGhostsCollisions();
 
         return toRenderDTO();
     }
@@ -243,9 +248,9 @@ public class GameLogic implements GameModel {
 
     }
 
-    public GameRenderData toRenderDTO() {
+    @Override
+    public ArrayList<EntityRenderData> getStaticDTO() {
         ArrayList<EntityRenderData> entities = new ArrayList<>();
-
         for (Block wall : walls) {
             entities.add( new EntityRenderData(
                     EntityType.WALL,
@@ -275,6 +280,12 @@ public class GameLogic implements GameModel {
                     -1
             ));
         }
+
+        return entities;
+    }
+
+    public GameRenderData toRenderDTO() {
+        ArrayList<EntityRenderData> entities = new ArrayList<>();
 
         for (Boost boost : boosts) {
 
@@ -327,7 +338,7 @@ public class GameLogic implements GameModel {
         ));
 
 
-        return new GameRenderData(map, entities, score, lives);
+        return new GameRenderData(entities, pelletsLeft, score, lives);
     }
 
     public GameStatus getStatus() {
