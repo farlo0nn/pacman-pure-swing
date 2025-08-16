@@ -1,6 +1,8 @@
 Pac-Man Game 🟡
 
 A classic Pac-Man game implementation built with Java Swing.
+Built using MVC architecture
+
 About
 
 This is a recreation of the iconic Pac-Man arcade game using Java's Swing framework. Navigate through mazes, collect dots, avoid ghosts, and try to achieve the highest score possible.
